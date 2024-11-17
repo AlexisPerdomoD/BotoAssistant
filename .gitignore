@@ -1,0 +1,14 @@
+# Build Folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.vs/
+.vscode/
+
+# Auto-generated files
+*.suo
+*.userosscache
+*.sln.docstates
+
