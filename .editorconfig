@@ -85,6 +85,8 @@ dotnet_style_prefer_compound_assignment = true:suggestion         # Operadores c
 dotnet_style_prefer_simplified_interpolation = true:suggestion    # Interpolación de strings simplificada
 dotnet_style_prefer_simplified_boolean_expressions = true:suggestion # E
 # Métodos de una sola línea (expression-bodied)
+# Prohibir sugerencias para funciones estáticas si no es necesario
+dotnet_style_require_static_for_local_functions = never
 
 
 
