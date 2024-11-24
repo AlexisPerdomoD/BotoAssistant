@@ -1,8 +1,9 @@
+using Microsoft.Extensions.Logging;
 namespace Boto.Utils;
 
-using Microsoft.Extensions.Logging;
 
-enum LogCategory
+
+public enum LogCategory
 {
     ExternalError,
     InternalError,
@@ -15,15 +16,15 @@ enum LogCategory
 
 public interface IBotoLogger : ILogger
 {
-    public void LogDebug(string m);
-    public void LogInformation(string m, bool? time);
-    public void LogWarning(string m, bool? time);
-    public void LogError(string m, Exception e);
-    public void LogCritical(string m, Exception e);
+    public void LogDebug(string message);
+    public void LogInformation(string message, bool? time);
+    public void LogWarning(string message, bool? time);
+    public void LogError(string message, Exception e);
+    public void LogCritical(string message, Exception e);
 }
-public class BotoMainLogger : IBotoLogger
+public class BotoMainLogger(LogLevel logLevel) : IBotoLogger
 {
-    private readonly LogLevel _logLevel;
+    private readonly LogLevel _logLevel = logLevel;
     private string _defaultFormater(string message, Exception? exception)
     {
         if (exception != null)
@@ -38,52 +39,35 @@ public class BotoMainLogger : IBotoLogger
 
 
     public bool IsEnabled(LogLevel logLevel) => logLevel >= LogLevel.Information;
+    // Para simplificar, no implementamos un scope. Si lo necesitas, puedes devolver un objeto IDisposable.
+    public IDisposable BeginScope<TState>(TState state) where TState : notnull => null!;
 
-
-    public IDisposable BeginScope<TState>(TState state) where TState : notnull
-    {
-        // Para simplificar, no implementamos un scope. Si lo necesitas, puedes devolver un objeto IDisposable.
-        return null!;
-    }
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        if (!IsEnabled(logLevel)) return;
+        if (!this.IsEnabled(logLevel)) return;
 
         string logMessage;
         logMessage = formatter(state, exception);
         Console.WriteLine(logMessage);
     }
 
-    public BotoMainLogger(LogLevel logLevel)
+    public void LogInformation(string message, bool? time)
     {
-        _logLevel = logLevel;
+        string logMessage = time == true ? $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}" : message;
+        this.Log(LogLevel.Information, default, logMessage, null, this._defaultFormater);
     }
 
-    public void LogInformation(string message, bool? includeTime)
+    public void LogWarning(string message, bool? time)
     {
-        string logMessage = includeTime == true ? $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}" : message;
-        Log(LogLevel.Information, default, logMessage, null, _defaultFormater);
+        string logMessage = time == true ? $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}" : message;
+        this.Log(LogLevel.Warning, default, logMessage, null, this._defaultFormater);
     }
-
-    public void LogWarning(string message, bool? includeTime)
-    {
-        string logMessage = includeTime == true ? $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}" : message;
-        Log(LogLevel.Warning, default, logMessage, null, _defaultFormater);
-    }
-
-    public void LogError(string message, Exception exception)
-    {
-        Log(LogLevel.Error, default, message, exception, _defaultFormater);
-    }
-
-    public void LogCritical(string message, Exception exception)
-    {
-        Log(LogLevel.Critical, default, message, exception, _defaultFormater);
-    }
-
+    public void LogError(string message, Exception e)
+        => this.Log(LogLevel.Error, default, message, e, this._defaultFormater);
+    public void LogCritical(string message, Exception e)
+        => this.Log(LogLevel.Critical, default, message, e, this._defaultFormater);
     public void LogDebug(string message)
-    {
-        Log(LogLevel.Debug, default, message, null, _defaultFormater);
-    }
+        => this.Log(LogLevel.Debug, default, message, null, this._defaultFormater);
+
 
 }

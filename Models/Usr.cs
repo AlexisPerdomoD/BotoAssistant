@@ -1,12 +1,14 @@
-namespace Boto.Models;
 using Boto.Setup;
 using Boto.Utils;
 using System.Text.Json;
+
+namespace Boto.Models;
+
 public interface IUsr
 {
     public string Name { get; set; }
     public string UsrProfile { get; set; }
-    public DateTime lastLogin { get; set; }
+    public DateTime LastLogin { get; set; }
     public string[] ProfileTags { get; set; }
 
     /// <summary>
@@ -20,15 +22,15 @@ public interface IUsr
 public interface IUsrMannager
 {
     public static abstract string Wdir { get; }
-    public Task<(bool? e, IUsr? usr)> UsrExists(string usr);
+    public Task<(bool? e, IUsr? usr)> UsrExists(string usrName);
 }
 
 public class Usr : IUsr
 {
-    public string Wdir => Env.WORKING_USER_DIRECTORY;
+    public static string Wdir => Env.WorkingDirectory;
     public string Name { get; set; }
     public string UsrProfile { get; set; }
-    public DateTime lastLogin { get; set; }
+    public DateTime LastLogin { get; set; }
     public string[] ProfileTags { get; set; }
     private string _path { get; }
 
@@ -36,36 +38,44 @@ public class Usr : IUsr
     {
         try
         {
-            if (!Directory.Exists($"{Wdir}/usr")) Directory.CreateDirectory($"{Wdir}/usr");
-            string usrPath = Path.Combine(Wdir, $"/usr/{Name}.json");
-            var usrFileText = JsonSerializer.Serialize<Usr>(this);
+            if (!Directory.Exists($"{Wdir}/usr"))
+            {
+                DirectoryInfo dir = Directory.CreateDirectory($"{Wdir}/usr");
+                Console.WriteLine($"Created directory {dir.FullName}\n");
+            }
+            string usrPath = Path.Combine(Wdir, $"/usr/{this.Name}.json");
+            string usrFileText = JsonSerializer.Serialize(this);
             await File.WriteAllTextAsync(usrPath, usrFileText);
             return null;
         }
         catch (Exception e)
         {
-            return $"{e.GetType().ToString()}\n{e.Message}\n{e.StackTrace}";
+            return $"{e.GetType().Name}\n{e.Message}\n{e.StackTrace}";
 
         }
     }
 
-    Usr(string name, string usrProfile, string[] profileTags, string usrPath)
+    public Usr(string name, string usrProfile, string[] profileTags, string usrPath)
     {
         if (string.IsNullOrEmpty(name.Trim()))
             throw new ArgumentNullException(nameof(name));
 
-        this.Name = name.Trim().ToLower();
+
+        this.Name = name.ToLowerInvariant().Trim();
         this.UsrProfile = usrProfile;
         this.ProfileTags = profileTags;
         this._path = usrPath;
-        this.lastLogin = DateTime.Now;
+        this.LastLogin = DateTime.Now;
     }
 }
 
-public class UsrMannager : IUsrMannager
+public class UsrMannager(IBotoLogger logger) : IUsrMannager
+
+
 {
-    public static string Wdir => Env.WORKING_USER_DIRECTORY;
-    private IBotoLogger _logger;
+    public static string Wdir => Env.WorkingDirectory;
+    private readonly IBotoLogger _logger = logger;
+
     public async Task<(bool? e, IUsr? usr)> UsrExists(string usrName)
     {
         try
@@ -73,10 +83,13 @@ public class UsrMannager : IUsrMannager
             string usrPath = Path.Combine(Wdir, $"/usr/{usrName}.json");
             if (!File.Exists(usrPath)) return (true, null);
 
-            if (!Directory.Exists($"{Wdir}/usr")) Directory.CreateDirectory($"{Wdir}/usr");
+            if (!Directory.Exists($"{Wdir}/usr"))
+            {
+                _ = Directory.CreateDirectory($"{Wdir}/usr");
+            }
 
-            var usrFileText = await File.ReadAllTextAsync(usrPath);
-            IUsr usr = JsonSerializer.Deserialize<IUsr>(usrFileText) ?? throw new Exception("Failed to deserialize usr file or it is empty");
+            string usrFileText = await File.ReadAllTextAsync(usrPath);
+            IUsr usr = JsonSerializer.Deserialize<IUsr>(usrFileText) ?? throw new JsonException("Failed to deserialize usr file or it is empty");
             return (null, usr);
 
         }
@@ -89,8 +102,5 @@ public class UsrMannager : IUsrMannager
 
     }
 
-    public UsrMannager(Boto.Utils.IBotoLogger logger)
-    {
-        _logger = logger;
-    }
+
 }
