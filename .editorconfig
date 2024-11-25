@@ -34,8 +34,8 @@ dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 dotnet_style_predefined_type_for_member_access = true:suggestion
 
 # Preferencias de var
-csharp_style_var_for_built_in_types = false:suggestion
-csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_for_built_in_types = false:silence
+csharp_style_var_when_type_is_apparent = false:silence
 csharp_style_var_elsewhere = false:silence
 csharp_prefer_braces = when_multiline:suggestion
 csharp_new_line_before_open_brace = all
@@ -87,7 +87,7 @@ dotnet_style_prefer_simplified_boolean_expressions = true:suggestion # E
 # Métodos de una sola línea (expression-bodied)
 # Prohibir sugerencias para funciones estáticas si no es necesario
 dotnet_style_require_static_for_local_functions = never
-
+dotnet_diagnostic.IDE0071.severity = none
 
 
 

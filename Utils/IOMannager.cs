@@ -80,4 +80,7 @@ public class MainIOMannager(LogLevel logLevel) : IBotoLogger, IInputOutputMannag
         => this.Log(LogLevel.Critical, default, message, e, this._defaultFormater);
     public void LogDebug(string message)
         => this.Log(LogLevel.Debug, default, message, null, this._defaultFormater);
+    public void ClearLogs()
+        => Console.Clear();
+
 }
