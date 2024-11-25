@@ -34,13 +34,14 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
     }
 
 
-    public async Task<(Exception? e, IUsr? usr)> CreateUsr(IUsr usr)
+    public async Task<(Exception? e, IUsr? usr)> CreateUsr(string usrName, string usrProfile, string[] profileTags)
     {
         try
         {
             if (!Directory.Exists($"{Wdir}/usr")) _ = Directory.CreateDirectory($"{Wdir}/usr");
 
-            string usrPath = Path.Combine(Wdir, $"/usr/{usr.Name}.json");
+            string usrPath = Path.Combine(Wdir, $"/usr/{usrName}.json");
+            IUsr usr = new Usr(usrName, usrProfile, profileTags);
             string usrFileText = JsonSerializer.Serialize(usr);
             await File.WriteAllTextAsync(usrPath, usrFileText);
             this._currentUsr = usr;
@@ -50,12 +51,26 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
         {
             return (e, null);
         }
-
-
     }
-    public bool SetCurrentUsr(IUsr usr)
+    public async Task<bool> SetCurrentUsr(IUsr? usr)
     {
-        // TODO: check if user exists and other validaations
+        if (usr == null)
+        {
+            this._currentUsr = null;
+            return true;
+        }
+        var (e, user) = await this.UsrExists(usr.Name);
+        if (e != null)
+        {
+            this._logger.LogError($"Error while checking if user {usr.Name} exists.", e);
+            return false;
+        }
+        if (user == null)
+        {
+            this._logger.LogInformation($"User {usr.Name} does not exist.");
+            return false;
+        }
+
         this._currentUsr = usr;
         return true;
     }

@@ -44,5 +44,3 @@ public class Usr : IUsr
         this.LastLogin = DateTime.Now;
     }
 }
-
-
