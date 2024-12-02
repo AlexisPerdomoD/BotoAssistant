@@ -28,6 +28,7 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
         Console.Clear();
         string? input = await this.Start();
         bool requiredStartAgain = false;
+        if (string.IsNullOrWhiteSpace(input)) return null;
         while (input != "exit")
         {
             if (requiredStartAgain)

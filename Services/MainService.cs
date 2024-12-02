@@ -11,7 +11,7 @@ public class MainService(IIOMannagerService iom, string name, string description
         {
             if (requiredStartAgain == false)
             {
-                string? name = this.IOM.GetInput($"Welcome to Boto Assistant!\nThis program is meant to be used as a terminal interface to mannage IA requests, some files and notes mannagement in order to be used along with other terminal developer tools.\n\nWho are you?\ntype \"exit\" to go out.");
+                string? name = this.IOM.GetInput($"Welcome to Boto Assistant!\n\nThis program is meant to be used as a terminal interface to mannage IA requests.\nsome files and notes mannagement in order to be used along with other terminal developer tools.\n\nWho are you?\n\ntype \"exit\" to go out.");
 
                 if (string.IsNullOrWhiteSpace(name) || name == "exit")
                 {
@@ -27,7 +27,7 @@ public class MainService(IIOMannagerService iom, string name, string description
 
                 if (usr == null)
                 {
-                    this.IOM.LogInformation($"User {name} does not exist.\n");
+                    this.IOM.LogInformation($"User {name} does not exist.Creating...\n");
                     string usrProfile = this.IOM.GetInput($"Please enter a general prompt for {name} profile.\nThe idea is use this when consulting AI APIS.\n") ?? "";
                     string profileTags = this.IOM.GetInput($"Please enter a list of tags for {name} profile separated by space.\nThe idea is use this when consulting AI APIS.\n") ?? "";
                     (e, usr) = await this.Mngr.CreateUsr(name, usrProfile, profileTags.Split(" "));
@@ -62,7 +62,6 @@ public class MainService(IIOMannagerService iom, string name, string description
 
     public void GoodBye()
     {
-        this.IOM.ClearLogs();
         this.IOM.LogInformation("Goodbye! Have a nice day!");
         Environment.Exit(0);
     }

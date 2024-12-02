@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Boto.Models;
 
 namespace Boto.Utils;
-public class MainIOMannager(LogLevel logLevel) : IBotoLogger, IInputOutputMannager
+public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
 {
     private readonly LogLevel _logLevel = logLevel;
     public string? LastInput { get; private set; }
@@ -19,7 +19,7 @@ public class MainIOMannager(LogLevel logLevel) : IBotoLogger, IInputOutputMannag
             this.LogInformation(customTryAgainMessage ?? "Invalid input. Please try again.", false);
             input = Console.ReadLine();
             tries++;
-            if (tries > 3)
+            if (tries > 2)
             {
                 this.LogInformation("Too many tries. Ending selection.", true);
                 input = null;

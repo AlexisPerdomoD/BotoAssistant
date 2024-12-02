@@ -14,14 +14,12 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
 
     public async Task<(Exception? e, IUsr? usr)> UsrExists(string usrName)
     {
-
-
         try
         {
-            string usrPath = Path.Combine(Wdir, $"/usr/{usrName}.json");
+            string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             if (!File.Exists(usrPath)) return (null, null);
             string usrFileText = await File.ReadAllTextAsync(usrPath);
-            IUsr usr = JsonSerializer.Deserialize<IUsr>(usrFileText) ?? throw new JsonException("Failed to deserialize usr file or it is empty");
+            IUsr usr = JsonSerializer.Deserialize<Usr>(usrFileText) ?? throw new JsonException("Failed to deserialize usr file or it is empty");
             return (null, usr);
         }
         catch (Exception e)
@@ -40,7 +38,7 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
         {
             if (!Directory.Exists($"{Wdir}/usr")) _ = Directory.CreateDirectory($"{Wdir}/usr");
 
-            string usrPath = Path.Combine(Wdir, $"/usr/{usrName}.json");
+            string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             IUsr usr = new Usr(usrName, usrProfile, profileTags);
             string usrFileText = JsonSerializer.Serialize(usr);
             await File.WriteAllTextAsync(usrPath, usrFileText);
