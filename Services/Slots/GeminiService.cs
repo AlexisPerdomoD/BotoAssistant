@@ -7,8 +7,13 @@ using Boto.Models;
 /// </summary
 namespace Boto.Services.Slots;
 
-public class GeminiService(IIOMannagerService iom, string name, string description)
-    : BaseService(iom, name, description, options: _options)
+public class GeminiService(IIOMannagerService iom)
+    : BaseService(
+        iom,
+        name: "Gemini",
+        description: "Gemini IA assistant Service, this module includes calling the API, list old conversations, etc",
+        options: _options
+    )
 {
     private static readonly ImmutableDictionary<string, IServiceOption> _options = new Dictionary<
         string,
