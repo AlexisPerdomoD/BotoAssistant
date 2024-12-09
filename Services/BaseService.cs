@@ -1,16 +1,32 @@
-using Boto.Models;
 using System.Collections.Immutable;
+using Boto.Models;
+
 namespace Boto.Services;
+
 /// <summary>
-/// Base Service class with optional abstractions for default implementations.
+/// Base service class with optional abstractions for default implementations.
 /// </summary>
-public abstract class BaseService(IIOMannagerService iom, string name, string description, ImmutableDictionary<string, IServiceOption> options) : IService
+/// <remarks>
+/// <list type="bullet">
+/// <item><term><b>Name</b></term><description>Name of the service.</description></item>
+/// <item><term><b>Description</b></term><description>Description of the service.</description></item>
+/// <item><term><b>Options</b></term><description>Dictionary of options for the service, where the key is the option name and the value is the <c>IServiceOption</c> implementation.</description></item>
+/// <item><term><b>Start</b></term><description>Method to start the service.</description></item>
+/// <item><term><b>Run</b></term><description>Method to run the service.</description></item>
+/// </list>
+/// </remarks>
+public abstract class BaseService(
+    IIOMannagerService iom,
+    string name,
+    string description,
+    ImmutableDictionary<string, IServiceOption> options
+) : IService
 {
     public IIOMannagerService IOM => iom;
     public string Name => name;
     public string Description => description;
     public ImmutableDictionary<string, IServiceOption> Options => options;
-    public abstract Task<string?> Start(bool? requiredStartAgain = false);
+    public abstract Task<string?> Start(bool requiredStartAgain = false);
 
     protected static string FmtOptsList(ImmutableDictionary<string, IServiceOption> options)
     {
@@ -28,7 +44,8 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
         Console.Clear();
         string? input = await this.Start();
         bool requiredStartAgain = false;
-        if (string.IsNullOrWhiteSpace(input)) return null;
+        if (string.IsNullOrWhiteSpace(input))
+            return null;
         while (input != "exit")
         {
             if (requiredStartAgain)
@@ -39,8 +56,11 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
 
             if (string.IsNullOrWhiteSpace(input))
             {
-                input = this.IOM.GetInput("Please enter a valid option name.\nElse service will be ended.\n");
-                if (string.IsNullOrWhiteSpace(input)) break;
+                input = this.IOM.GetInput(
+                    "Please enter a valid option name.\nElse service will be ended.\n"
+                );
+                if (string.IsNullOrWhiteSpace(input))
+                    break;
             }
 
             if (!this.Options.TryGetValue(input, out IServiceOption? option))
@@ -51,10 +71,26 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
                 continue;
             }
 
-            if (option.CleanConsoleRequired) Console.Clear();
-            input = await option.exec();
-        };
+            if (option.CleanConsoleRequired)
+                Console.Clear();
+            input = await option.Exec();
+        }
+        ;
         this.IOM.LogInformation($"Exiting Service {this.Name}.\n");
         return input;
     }
+}
+
+public class ServiceOption(
+    string name,
+    string description,
+    bool cleanConsoleRequired,
+    Func<string[]?, Task<string?>> exec
+) : IServiceOption
+{
+    public string Name => name;
+    public string Description => description;
+    public bool CleanConsoleRequired => cleanConsoleRequired;
+
+    public Task<string?> Exec(string[]? args = null) => exec(args);
 }

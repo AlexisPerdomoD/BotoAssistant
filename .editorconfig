@@ -20,13 +20,13 @@ dotnet_style_qualification_for_method = true:warning
 dotnet_style_qualification_for_event = true:warning
 
 # Características modernas de C#
-csharp_style_namespace_declarations = file_scoped:suggestion    # Habilita namespace Namespace.Name;
-csharp_style_prefer_primary_constructors = true:silence   # Constructores primarios
-csharp_style_prefer_top_level_statements = true:suggestion   # Top-level statements
-csharp_style_expression_bodied_properties = true:suggestion  # Propiedades expression-bodied
-csharp_style_prefer_switch_expression = true:suggestion      # Switch expressions
-csharp_style_prefer_pattern_matching = true:suggestion       # Pattern matching
-csharp_style_prefer_not_pattern = true:suggestion           # Pattern matching con not
+csharp_style_namespace_declarations = file_scoped:suggestion   
+csharp_style_prefer_primary_constructors = false:silence
+csharp_style_prefer_top_level_statements = true:suggestion
+csharp_style_expression_bodied_properties = true:suggestion  
+csharp_style_prefer_switch_expression = true:suggestion      
+csharp_style_prefer_pattern_matching = true:suggestion       
+csharp_style_prefer_not_pattern = true:suggestion           
 csharp_style_prefer_extended_property_pattern = true:suggestion
 
 # Preferencias de tipo

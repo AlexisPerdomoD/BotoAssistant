@@ -1,6 +1,6 @@
 using System.Text.Json;
-
 using Boto.Setup;
+
 namespace Boto.Models;
 
 public class Usr : IUsr
@@ -29,7 +29,6 @@ public class Usr : IUsr
         catch (Exception e)
         {
             return $"{e.GetType().Name}\n{e.Message}\n{e.StackTrace}";
-
         }
     }
 

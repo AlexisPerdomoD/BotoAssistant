@@ -23,8 +23,8 @@ public interface IUsr
     /// <param name="usr"></param>
     /// <returns>error message if any, else null</returns>
     public Task<string?> SaveUsrSts();
-
 }
+
 /// <summary>
 ///   Interface for a user manager that can be used by the main program
 /// </summary>
@@ -34,7 +34,11 @@ public interface IUsr
 public interface IUsrMngr
 {
     public Task<(Exception? e, IUsr? usr)> UsrExists(string usrName);
-    public Task<(Exception? e, IUsr? usr)> CreateUsr(string usrName, string usrProfile, string[] profileTags);
+    public Task<(Exception? e, IUsr? usr)> CreateUsr(
+        string usrName,
+        string usrProfile,
+        string[] profileTags
+    );
     public IUsr? GetCurrentUsr();
     public Task<bool> SetCurrentUsr(IUsr? usr);
 }
@@ -56,6 +60,7 @@ public interface IBotoLogger : ILogger
     public void LogCritical(string message, Exception e);
     public void ClearLogs();
 }
+
 /// <summary>
 ///   Interface for a input/output manager that can be used by the main program
 /// </summary>
@@ -64,10 +69,12 @@ public interface IBotoLogger : ILogger
 /// </remarks>
 public interface IInputOutputMannager
 {
-    public string? GetInput(string prompt, Func<string?, bool>? validator = null, string? customTryAgainMessage = null);
+    public string? GetInput(
+        string prompt,
+        Func<string?, bool>? validator = null,
+        string? customTryAgainMessage = null
+    );
     public void ClearHistory();
     public string? LastInput { get; }
     public List<string> History { get; }
 }
-
-

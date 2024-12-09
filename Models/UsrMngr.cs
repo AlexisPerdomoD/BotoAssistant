@@ -1,9 +1,7 @@
-using Boto.Setup;
 using System.Text.Json;
+using Boto.Setup;
 
 namespace Boto.Models;
-
-
 
 public class UsrMngr(IBotoLogger logger) : IUsrMngr
 {
@@ -17,26 +15,39 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
         try
         {
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
-            if (!File.Exists(usrPath)) return (null, null);
+            if (!File.Exists(usrPath))
+                return (null, null);
+
             string usrFileText = await File.ReadAllTextAsync(usrPath);
-            IUsr usr = JsonSerializer.Deserialize<Usr>(usrFileText) ?? throw new JsonException("Failed to deserialize usr file or it is empty");
+            IUsr usr =
+                JsonSerializer.Deserialize<Usr>(usrFileText)
+                ?? throw new JsonException("Failed to deserialize usr file or it is empty");
+
             return (null, usr);
         }
         catch (Exception e)
         {
-            this._logger.LogInformation("Error happen while verifying user.\nProgram will be finished.", true);
+            this._logger.LogInformation(
+                "Error happen while verifying user.\nProgram will be finished.",
+                true
+            );
 
-            if (AppMode == "DEV") this._logger.LogError(e.Message, e);
+            if (AppMode == "DEV")
+                this._logger.LogError(e.Message, e);
             return (e, null);
         }
     }
 
-
-    public async Task<(Exception? e, IUsr? usr)> CreateUsr(string usrName, string usrProfile, string[] profileTags)
+    public async Task<(Exception? e, IUsr? usr)> CreateUsr(
+        string usrName,
+        string usrProfile,
+        string[] profileTags
+    )
     {
         try
         {
-            if (!Directory.Exists($"{Wdir}/usr")) _ = Directory.CreateDirectory($"{Wdir}/usr");
+            if (!Directory.Exists($"{Wdir}/usr"))
+                _ = Directory.CreateDirectory($"{Wdir}/usr");
 
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             IUsr usr = new Usr(usrName, usrProfile, profileTags);
@@ -50,6 +61,7 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
             return (e, null);
         }
     }
+
     public async Task<bool> SetCurrentUsr(IUsr? usr)
     {
         if (usr == null)
@@ -72,6 +84,6 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
         this._currentUsr = usr;
         return true;
     }
-    public IUsr? GetCurrentUsr() => this._currentUsr;
 
+    public IUsr? GetCurrentUsr() => this._currentUsr;
 }
