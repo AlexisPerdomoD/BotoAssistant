@@ -75,7 +75,7 @@ public abstract class BaseService(
                 Console.Clear();
             input = await option.Exec();
         }
-        ;
+
         this.IOM.LogInformation($"Exiting Service {this.Name}.\n");
         return input;
     }

@@ -75,15 +75,22 @@ dotnet_naming_style.underscore_camel_case.required_prefix = _
 dotnet_naming_style.underscore_camel_case.capitalization = camel_case
 
 # Características modernas adicionales
-dotnet_style_object_initializer = true:suggestion                 # Inicializadores de objeto
-dotnet_style_collection_initializer = true:suggestion             # Inicializadores de colección
-dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion  # Operador ternario
+# Inicializadores de objeto
+dotnet_style_object_initializer = true:suggestion                 
+# Inicializadores de colección
+dotnet_style_collection_initializer = true:suggestion             
+# Operador ternario
+dotnet_style_prefer_conditional_expression_over_assignment = true:suggestion  
 dotnet_style_prefer_conditional_expression_over_return = true:suggestion
-dotnet_style_explicit_tuple_names = true:suggestion               # Nombres explícitos en tuplas
-dotnet_style_prefer_inferred_tuple_names = true:suggestion        # Inferencia de nombres en tuplas
-dotnet_style_prefer_compound_assignment = true:suggestion         # Operadores compuestos (+=, -=, etc)
-dotnet_style_prefer_simplified_interpolation = true:suggestion    # Interpolación de strings simplificada
-dotnet_style_prefer_simplified_boolean_expressions = true:suggestion # E
+# Nombres explícitos en tuplas
+dotnet_style_explicit_tuple_names = true:suggestion               
+# Inferencia de nombres en tuplas
+dotnet_style_prefer_inferred_tuple_names = true:suggestion
+# Operadores compuestos (+=, -=, etc)
+dotnet_style_prefer_compound_assignment = true:suggestion
+# Interpolación de strings simplificada
+dotnet_style_prefer_simplified_interpolation = true:suggestion
+dotnet_style_prefer_simplified_boolean_expressions = true:suggestion 
 # Métodos de una sola línea (expression-bodied)
 # Prohibir sugerencias para funciones estáticas si no es necesario
 dotnet_style_require_static_for_local_functions = never
