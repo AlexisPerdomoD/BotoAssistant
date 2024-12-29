@@ -9,9 +9,10 @@ public class MainService(
     string description,
     ImmutableDictionary<string, IServiceOption> options,
     IUsrMngr usrMngr
-) : BaseService(iom, name, description, options), IMainService, IUserService
+) : BaseService(iom, name, description), IMainService, IUserService
 {
     public IUsrMngr Mngr { get; } = usrMngr;
+    public override ImmutableDictionary<string, IServiceOption> Options { get; } = options;
 
     public override async Task<string?> Start(bool requiredStartAgain = false)
     {

@@ -15,17 +15,13 @@ namespace Boto.Services;
 /// <item><term><b>Run</b></term><description>Method to run the service.</description></item>
 /// </list>
 /// </remarks>
-public abstract class BaseService(
-    IIOMannagerService iom,
-    string name,
-    string description,
-    ImmutableDictionary<string, IServiceOption> options
-) : IService
+public abstract class BaseService(IIOMannagerService iom, string name, string description)
+    : IService
 {
     public IIOMannagerService IOM => iom;
     public string Name => name;
     public string Description => description;
-    public ImmutableDictionary<string, IServiceOption> Options => options;
+    public abstract ImmutableDictionary<string, IServiceOption> Options { get; }
     public abstract Task<string?> Start(bool requiredStartAgain = false);
 
     protected static string FmtOptsList(ImmutableDictionary<string, IServiceOption> options)
@@ -79,18 +75,4 @@ public abstract class BaseService(
         this.IOM.LogInformation($"Exiting Service {this.Name}.\n");
         return input;
     }
-}
-
-public class ServiceOption(
-    string name,
-    string description,
-    bool cleanConsoleRequired,
-    Func<string[]?, Task<string?>> exec
-) : IServiceOption
-{
-    public string Name => name;
-    public string Description => description;
-    public bool CleanConsoleRequired => cleanConsoleRequired;
-
-    public Task<string?> Exec(string[]? args = null) => exec(args);
 }
