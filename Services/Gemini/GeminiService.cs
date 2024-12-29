@@ -49,7 +49,7 @@ public class GeminiService(IIOMannagerService iom, IUsrMngr usrMngr)
                     }
                 )
             }
-        }.ToImmutableDictionary();
+        }.ToImmutableDictionary(); // TODO: pass this Dictionary as an intance outside of the class to avoid creating a ImmutableDictionary intance everytime
 
     // TODO: Call the API METHOD
     // TODO: LIST OLD CONVERSATIONS METHOD
