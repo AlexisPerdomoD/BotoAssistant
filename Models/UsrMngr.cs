@@ -5,8 +5,8 @@ namespace Boto.Models;
 
 public class UsrMngr(IBotoLogger logger) : IUsrMngr
 {
-    public static string Wdir => Env.WorkingDirectory;
-    public static string AppMode => Env.AppMode;
+    public static readonly string Wdir = Env.WorkingDirectory;
+    public static readonly string AppMode = Env.AppMode;
     private readonly IBotoLogger _logger = logger;
     private IUsr? _currentUsr;
 
@@ -22,7 +22,6 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
             IUsr usr =
                 JsonSerializer.Deserialize<Usr>(usrFileText)
                 ?? throw new JsonException("Failed to deserialize usr file or it is empty");
-
             return (null, usr);
         }
         catch (Exception e)
@@ -64,7 +63,7 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
 
     public async Task<bool> SetCurrentUsr(IUsr? usr)
     {
-        if (usr == null)
+        if (usr is null)
         {
             this._currentUsr = null;
             return true;
@@ -80,7 +79,28 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
             this._logger.LogInformation($"User {usr.Name} does not exist.");
             return false;
         }
+        usr.LastLogin = DateTime.Now;
+        _ = await usr.SaveUsrSts(); // TODO: Check if return string Error 
+        this._currentUsr = usr;
+        return true;
+    }
 
+    public async Task<bool> SetCurrentUsr(string usrName)
+    {
+        var (e, usr) = await this.UsrExists(usrName);
+        if (e != null)
+        {
+            this._logger.LogError($"Error while checking if user {usrName} exists.", e);
+            return false;
+        }
+        if (usr == null)
+        {
+            this._logger.LogInformation($"User {usrName} does not exist.");
+            return false;
+        }
+
+        usr.LastLogin = DateTime.Now;
+        _ = await usr.SaveUsrSts(); // TODO: Check if return string Error
         this._currentUsr = usr;
         return true;
     }

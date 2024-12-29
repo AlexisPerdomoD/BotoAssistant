@@ -2,6 +2,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Boto.Models;
 
+public interface IChat<T>
+{
+    public string? Current { get; set; }
+    public List<T> History { get; }
+}
+
 /// --- Main Models ---
 
 /// <summary>
@@ -14,7 +20,7 @@ public interface IUsr
 {
     public string Name { get; }
     public string UsrProfile { get; set; }
-    public DateTime LastLogin { get; }
+    public DateTime LastLogin { get; set; }
     public string[] ProfileTags { get; set; }
 
     /// <summary>
