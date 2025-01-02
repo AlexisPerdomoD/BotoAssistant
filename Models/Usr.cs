@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Boto.Setup;
+using Boto.Utils.Json;
 
 namespace Boto.Models;
 
@@ -21,7 +22,7 @@ public class Usr : IUsr
                 DirectoryInfo dir = Directory.CreateDirectory($"{_wdir}/usr");
                 Console.WriteLine($"Created directory {dir.FullName}\n");
             }
-            string usrFileText = JsonSerializer.Serialize(this);
+            string usrFileText = JsonSerializer.Serialize(this, UsrJsonContext.Default.Usr);
             await File.WriteAllTextAsync(_path, usrFileText);
             return null;
         }

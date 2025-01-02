@@ -1,10 +1,22 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Boto.Services.Gemini;
 
-internal class Chat
+/// Model for serializing and deserializing the Chat class
+[JsonSourceGenerationOptions(
+    WriteIndented = true,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase
+)]
+[JsonSerializable(typeof(Chat))]
+internal partial class ChatJsonContext : JsonSerializerContext { }
+
+internal class Chat(string? model = null)
 {
-    public enum Rol
+    public static readonly string[] Models = ["gemini-1.5-flash"];
+    public readonly string Model = Models.FirstOrDefault(m => m == model) ?? "gemini-1.5-flash";
+
+    public enum Role
     {
         User,
         Assistant
@@ -12,11 +24,11 @@ internal class Chat
 
     public record Part(string text);
 
-    public record Content(Rol role, List<Part> parts);
+    public record Content(Role Role, List<Part> Parts);
 
-    private readonly List<Content> _current = new();
+    private readonly List<Content> _current = [];
 
-    public void Add(Rol role, string text)
+    public void Add(Role role, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -28,5 +40,5 @@ internal class Chat
         _current.Add(new Content(role, new([new Part(text)])));
     }
 
-    public string ToJson() => JsonSerializer.Serialize(_current);
+    public string ToJson() => JsonSerializer.Serialize(_current, ChatJsonContext.Default.Chat);
 }
