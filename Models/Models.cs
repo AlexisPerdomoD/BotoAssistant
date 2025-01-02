@@ -37,7 +37,7 @@ public interface IUsr
 /// <remarks>
 ///   A user manager is able to verify if a user exists, create a new user and get the current user
 /// </remarks>
-public interface IUsrMngr
+public interface IUsrMannager
 {
     public Task<(Exception? e, IUsr? usr)> UsrExists(string usrName);
     public Task<(Exception? e, IUsr? usr)> CreateUsr(

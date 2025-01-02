@@ -26,53 +26,60 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
 
     protected static string FmtOptsList(ImmutableDictionary<string, IServiceOption> options)
     {
-        string formatted = $"Options:\n";
+        string formatted = $"Options List:\n";
         foreach (var (key, value) in options)
         {
-            formatted += $"Service:{key.PadRight(30)} -> {value.Description}\n";
+            formatted += $"Service: {key.PadRight(10)} -> {value.Description}\n";
         }
-        formatted += $"\n{"Type 'exit' to exit".PadRight(30)}";
+        formatted += $"\n{"Type 'exit' to exit".PadRight(30)}\n";
         return formatted;
     }
 
     public async Task<string?> Run()
     {
-        Console.Clear();
+        IOM.ClearLogs();
         string? input = await this.Start();
-        bool requiredStartAgain = false;
         if (string.IsNullOrWhiteSpace(input))
-            return null;
-        while (input != "exit")
         {
-            if (requiredStartAgain)
+            IOM.LogInformation($"No input provided. Exiting Service {Name}.\n");
+            return null;
+        }
+        while (true)
+        {
+            if (input == "service child done")
             {
-                input = await this.Start(requiredStartAgain);
-                requiredStartAgain = false;
-            }
-
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                input = this.IOM.GetInput(
-                    "Please enter a valid option name.\nElse service will be ended.\n"
-                );
-                if (string.IsNullOrWhiteSpace(input))
-                    break;
-            }
-
-            if (!this.Options.TryGetValue(input, out IServiceOption? option))
-            {
-                Console.Clear();
-                this.IOM.LogInformation($"Option {input} not found.\n");
-                requiredStartAgain = true;
+                input = IOM.GetInput(FmtOptsList(Options));
                 continue;
             }
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                IOM.LogInformation($"No input provided. Exiting Service {Name}.\n");
+                break;
+            }
+            if (input == "exit")
+            {
+                IOM.LogInformation($"Exiting Service {Name}.\n");
+                break;
+            }
 
+            if (!Options.TryGetValue(input, out IServiceOption? option))
+            {
+                IOM.ClearLogs();
+                input = IOM.GetInput(
+                    $"Option {input} not found.\nPlease enter a valid option name.\n\n{FmtOptsList(Options)}"
+                );
+                continue;
+            }
             if (option.CleanConsoleRequired)
-                Console.Clear();
+                IOM.ClearLogs();
             input = await option.Exec();
         }
-
-        this.IOM.LogInformation($"Exiting Service {this.Name}.\n");
+        if (input == "exit")
+        {
+            IOM.ClearLogs();
+            IOM.LogInformation($"Service {Name} exited.\n");
+            input = "service child done";
+        }
         return input;
     }
 }

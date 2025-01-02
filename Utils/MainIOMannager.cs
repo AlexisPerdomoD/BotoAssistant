@@ -11,31 +11,38 @@ public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
 
     public string? GetInput(
         string prompt,
-        Func<string?, bool>? validator = null,
-        string? customTryAgainMessage = null
+        Func<string?, bool>? validator,
+        string? customTryAgainMessage
     )
     {
-        validator ??= static i => !string.IsNullOrWhiteSpace(i);
+        validator ??= static i => true;
         this.LogInformation(prompt, false);
-        string? input = Console.ReadLine();
-        int tries = 0;
-        while (!validator(input))
+        var input = Console.ReadLine();
+        var tries = 0;
+        if (string.IsNullOrWhiteSpace(input))
+            return null;
+        while (true)
         {
-            this.LogInformation(customTryAgainMessage ?? "Invalid input. Please try again.", false);
-            input = Console.ReadLine();
-            tries++;
-            if (tries > 2)
-            {
-                this.LogInformation("Too many tries. Ending selection.", true);
-                input = null;
+            input = input.Trim().ToLowerInvariant();
+
+            if (validator(input))
                 break;
+
+            if (++tries > 2)
+            {
+                this.LogWarning("Too many tries...");
+                return null;
             }
+
+            this.LogWarning(customTryAgainMessage ?? "Invalid input. Try again.");
+            input = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(input))
+                return null;
         }
-        if (input is not null)
-        {
-            this.LastInput = input;
-            this.History.Add(input);
-        }
+
+        LastInput = input;
+        History.Add(input);
         return input;
     }
 

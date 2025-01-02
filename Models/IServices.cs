@@ -84,5 +84,5 @@ public interface IMainService
 /// </summary>
 public interface IUserService
 {
-    public IUsrMngr Mngr { get; }
+    public IUsrMannager Mngr { get; }
 }

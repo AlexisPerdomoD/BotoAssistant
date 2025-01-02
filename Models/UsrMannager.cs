@@ -1,38 +1,37 @@
 using System.Text.Json;
 using Boto.Setup;
+using Boto.Utils.Json;
 
 namespace Boto.Models;
 
-public class UsrMngr(IBotoLogger logger) : IUsrMngr
+public class UsrMannager(IBotoLogger logger) : IUsrMannager
 {
     public static readonly string Wdir = Env.WorkingDirectory;
     public static readonly string AppMode = Env.AppMode;
-    private readonly IBotoLogger _logger = logger;
+    private readonly IBotoLogger _errorLogger = logger;
     private IUsr? _currentUsr;
 
     public async Task<(Exception? e, IUsr? usr)> UsrExists(string usrName)
     {
         try
         {
+            usrName = usrName.ToLowerInvariant().Trim();
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             if (!File.Exists(usrPath))
                 return (null, null);
-
             string usrFileText = await File.ReadAllTextAsync(usrPath);
-            IUsr usr =
-                JsonSerializer.Deserialize<Usr>(usrFileText)
-                ?? throw new JsonException("Failed to deserialize usr file or it is empty");
+            IUsr? usr = JsonSerializer.Deserialize(usrFileText, UsrJsonContext.Default.Usr);
             return (null, usr);
         }
         catch (Exception e)
         {
-            this._logger.LogInformation(
+            _errorLogger.LogInformation(
                 "Error happen while verifying user.\nProgram will be finished.",
                 true
             );
 
             if (AppMode == "DEV")
-                this._logger.LogError(e.Message, e);
+                _errorLogger.LogError(e.Message, e);
             return (e, null);
         }
     }
@@ -50,7 +49,7 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
 
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             IUsr usr = new Usr(usrName, usrProfile, profileTags);
-            string usrFileText = JsonSerializer.Serialize(usr);
+            string usrFileText = JsonSerializer.Serialize(usr, UsrJsonContext.Default.Usr);
             await File.WriteAllTextAsync(usrPath, usrFileText);
             this._currentUsr = usr;
             return (null, usr);
@@ -71,16 +70,16 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
         var (e, user) = await this.UsrExists(usr.Name);
         if (e != null)
         {
-            this._logger.LogError($"Error while checking if user {usr.Name} exists.", e);
+            _errorLogger.LogError($"Error while checking if user {usr.Name} exists.", e);
             return false;
         }
         if (user == null)
         {
-            this._logger.LogInformation($"User {usr.Name} does not exist.");
+            _errorLogger.LogInformation($"User {usr.Name} does not exist.");
             return false;
         }
         usr.LastLogin = DateTime.Now;
-        _ = await usr.SaveUsrSts(); // TODO: Check if return string Error 
+        _ = await usr.SaveUsrSts(); // TODO: Check if return string Error
         this._currentUsr = usr;
         return true;
     }
@@ -90,12 +89,12 @@ public class UsrMngr(IBotoLogger logger) : IUsrMngr
         var (e, usr) = await this.UsrExists(usrName);
         if (e != null)
         {
-            this._logger.LogError($"Error while checking if user {usrName} exists.", e);
+            _errorLogger.LogError($"Error while checking if user {usrName} exists.", e);
             return false;
         }
         if (usr == null)
         {
-            this._logger.LogInformation($"User {usrName} does not exist.");
+            _errorLogger.LogInformation($"User {usrName} does not exist.");
             return false;
         }
 
