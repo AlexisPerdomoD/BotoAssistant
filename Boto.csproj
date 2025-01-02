@@ -5,6 +5,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <WarningsAsErrors>true</WarningsAsErrors>
     <Nullable>enable</Nullable>
+    <PublishTrimmed>true</PublishTrimmed>
+    <!-- Opcional para eliminar código no utilizado -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <!-- Para empaquetar todo en un solo archivo -->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0"></PackageReference>
