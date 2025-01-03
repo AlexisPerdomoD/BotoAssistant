@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text;
 using Boto.Models;
 using Boto.Services.ServiceOption;
 
@@ -16,13 +17,21 @@ public class GeminiService(IIOMannagerService iom, IUsrMannager usrMngr)
     private Chat? _currentChat { get; set; }
 
     // TODO: Call the API METHOD
-    private void _callApi(Chat chat, bool stream = true)
+    public async Task<Chat?> GenerateText(Chat chat, bool stream = true)
     {
-        var baseUrl = "https://api.gemini.com/v1/ai/text/chatcompletion";
-        var body = chat.ToJson();
-        var chatType = stream ? "streamGenerateContent?alt=sse&key=" : "generateContent?key=";
-        var url = $"{baseUrl}/model/{chat.Model}:{chatType}";
-        // var ContentType = "application/json";
+        try
+        {
+            var baseUrl = "https://api.gemini.com/v1/ai/text/chatcompletion";
+            var chatType = stream ? "streamGenerateContent?alt=sse&key=" : "generateContent?key=";
+            var url = $"{baseUrl}/model/{chat.Model}:{chatType}";
+            var content = new StringContent(chat.ToJson(), Encoding.UTF8, "application/json");
+            var response = await _apiClient.PostAsync(url, content);
+            return null;
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
     }
 
     public override ImmutableDictionary<string, IServiceOption> Options =>

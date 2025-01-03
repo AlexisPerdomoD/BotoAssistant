@@ -11,10 +11,11 @@ namespace Boto.Services.Gemini;
 [JsonSerializable(typeof(Chat))]
 internal partial class ChatJsonContext : JsonSerializerContext { }
 
-internal class Chat(string? model = null)
+public class Chat(string? model = null)
 {
     public static readonly string[] Models = ["gemini-1.5-flash"];
-    public readonly string Model = Models.FirstOrDefault(m => m == model) ?? "gemini-1.5-flash";
+    public string Model { get; init; } =
+        Models.FirstOrDefault(m => m == model) ?? "gemini-1.5-flash";
 
     public enum Role
     {
@@ -40,5 +41,6 @@ internal class Chat(string? model = null)
         _current.Add(new Content(role, new([new Part(text)])));
     }
 
-    public string ToJson() => JsonSerializer.Serialize(_current, ChatJsonContext.Default.Chat);
+    public virtual string ToJson() =>
+        JsonSerializer.Serialize(_current, ChatJsonContext.Default.Chat);
 }
