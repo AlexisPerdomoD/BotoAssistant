@@ -95,6 +95,8 @@ dotnet_style_prefer_simplified_boolean_expressions = true:suggestion
 # Prohibir sugerencias para funciones estáticas si no es necesario
 dotnet_style_require_static_for_local_functions = never
 dotnet_diagnostic.IDE0071.severity = none
+# block required para type conversion implicit operators
+dotnet_diagnostic.IDE0023.severity = none
 
 
 
