@@ -1,5 +1,8 @@
 using System.Collections.Immutable;
-
+using Boto.Utils;
+/// TODO: CREATE interface for Result<T> class
+/// TODO: improve interfaces docs 
+/// TODO: Simplify the interfaces
 namespace Boto.Models;
 
 /// --- Services Models ---
@@ -16,7 +19,7 @@ public interface IServiceOption
     public string Name { get; }
     public string Description { get; }
     public bool CleanConsoleRequired { get; }
-    public Task<string?> Exec(string[]? args = null);
+    public Task<Result<string?>> Exec(string[]? args = null);
 }
 
 public interface IIOMannagerService : IBotoLogger, IInputOutputMannager;
@@ -34,7 +37,7 @@ public interface IService
     /// </summary>
     /// <param name="args">arguments to be passed to the service</param>
     /// <returns>next Option name, else null and finish the service</returns>
-    public Task<string?> Start(bool requiredStartAgain = false);
+    public Task<Result<string?>> Start(bool requiredStartAgain = false);
 
     /// <summary>
     ///   Input/Output Manager, used to handle the prompts prints on console or files and manage the history of the input. Also includes a ILogger implementation
@@ -49,7 +52,7 @@ public interface IService
     /// <summary>
     ///   Description of the service, used to explain what the service does
     /// </summary>
-    public string Description { get; }
+    public string Description { get; init; }
 
     /// <summary>
     ///   Dictionary of options for the service, where the key is the option name and the value is the IServiceOption implementation
@@ -63,7 +66,7 @@ public interface IService
     ///   Method to run the service
     /// </summary>
     /// <returns>next Service name, else null and finish the service</returns>
-    public Task<string?> Run();
+    public Task<Result<string?>> Run();
 }
 
 /// <summary>
