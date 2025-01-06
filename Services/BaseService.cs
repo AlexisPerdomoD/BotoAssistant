@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Boto.Models;
+using Boto.Utils;
 
 namespace Boto.Services;
 
@@ -22,7 +23,7 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
     public string Name => name;
     public string Description => description;
     public abstract ImmutableDictionary<string, IServiceOption> Options { get; }
-    public abstract Task<string?> Start(bool requiredStartAgain = false);
+    public abstract Task<Result<string?>> Start(bool requiredStartAgain = false);
 
     protected static string FmtOptsList(ImmutableDictionary<string, IServiceOption> options)
     {
@@ -35,10 +36,14 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
         return formatted;
     }
 
-    public async Task<string?> Run()
+    public async Task<Result<string?>> Run()
     {
         IOM.ClearLogs();
-        string? input = await this.Start();
+        var clearFinalLogs = true;
+        var startProcess = await this.Start();
+        if (!startProcess.IsOk)
+            return startProcess;
+        var input = startProcess.Value;
         if (string.IsNullOrWhiteSpace(input))
         {
             IOM.LogInformation($"No input provided. Exiting Service {Name}.\n");
@@ -72,11 +77,24 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
             }
             if (option.CleanConsoleRequired)
                 IOM.ClearLogs();
-            input = await option.Exec();
+            var res = await option.Exec();
+            input = res.Match(
+                i => i,
+                err =>
+                {
+                    clearFinalLogs = false;
+                    IOM.ClearLogs();
+                    IOM.LogWarning(
+                        $"Error: {err.ErrorType}\n${err.ErrorMessage}\n\nPlease try again."
+                    );
+                    return "exit";
+                }
+            );
         }
         if (input == "exit")
         {
-            IOM.ClearLogs();
+            if (clearFinalLogs)
+                IOM.ClearLogs();
             IOM.LogInformation($"Service {Name} exited.\n");
             input = "service child done";
         }

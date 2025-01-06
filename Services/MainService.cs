@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Boto.Models;
+using Boto.Utils;
 
 namespace Boto.Services;
 
@@ -14,7 +15,7 @@ public class MainService(
     public IUsrMannager Mngr { get; } = usrMngr;
     public override ImmutableDictionary<string, IServiceOption> Options { get; } = options;
 
-    public override async Task<string?> Start(bool requiredStartAgain = false)
+    public override async Task<Result<string?>> Start(bool requiredStartAgain = false)
     {
         if (!requiredStartAgain)
         {
