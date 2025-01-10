@@ -4,8 +4,8 @@ namespace Boto.Models;
 
 public interface IChat<T>
 {
-    public string? Current { get; set; }
-    public List<T> History { get; }
+    string? Current { get; set; }
+    List<T> History { get; }
 }
 
 /// --- Main Models ---
@@ -18,17 +18,17 @@ public interface IChat<T>
 /// </remarks>
 public interface IUsr
 {
-    public string Name { get; }
-    public string UsrProfile { get; set; }
-    public DateTime LastLogin { get; set; }
-    public string[] ProfileTags { get; set; }
+    string Name { get; }
+    string UsrProfile { get; set; }
+    DateTime LastLogin { get; set; }
+    string[] ProfileTags { get; set; }
 
     /// <summary>
     ///   Method to load the user's STS data, usually on "${BOTO_WORKING_DIRECTORY}/usr/usr.json"
     /// </summary>
     /// <param name="usr"></param>
     /// <returns>error message if any, else null</returns>
-    public Task<string?> SaveUsrSts();
+    Task<string?> SaveUsrSts();
 }
 
 /// <summary>
@@ -39,14 +39,14 @@ public interface IUsr
 /// </remarks>
 public interface IUsrMannager
 {
-    public Task<(Exception? e, IUsr? usr)> UsrExists(string usrName);
-    public Task<(Exception? e, IUsr? usr)> CreateUsr(
+    Task<(Exception? e, IUsr? usr)> UsrExists(string usrName);
+    Task<(Exception? e, IUsr? usr)> CreateUsr(
         string usrName,
         string usrProfile,
         string[] profileTags
     );
-    public IUsr? GetCurrentUsr();
-    public Task<bool> SetCurrentUsr(IUsr? usr);
+    IUsr? GetCurrentUsr();
+    Task<bool> SetCurrentUsr(IUsr? usr);
 }
 
 /// --- Utils Models ---
@@ -59,12 +59,12 @@ public interface IUsrMannager
 /// </remarks>
 public interface IBotoLogger : ILogger
 {
-    public void LogDebug(string message);
-    public void LogInformation(string message, bool? time = false);
-    public void LogWarning(string message, bool? time = false);
-    public void LogError(string message, Exception e);
-    public void LogCritical(string message, Exception e);
-    public void ClearLogs();
+    void LogDebug(string message);
+    void LogInformation(string message, bool? time = false);
+    void LogWarning(string message, bool? time = false);
+    void LogError(string message, Exception e);
+    void LogCritical(string message, Exception e);
+    void ClearLogs();
 }
 
 /// <summary>
@@ -75,12 +75,12 @@ public interface IBotoLogger : ILogger
 /// </remarks>
 public interface IInputOutputMannager
 {
-    public string? GetInput(
+    string? GetInput(
         string prompt,
         Func<string?, bool>? validator = null,
         string? customTryAgainMessage = null
     );
-    public void ClearHistory();
-    public string? LastInput { get; }
-    public List<string> History { get; }
+    void ClearHistory();
+    string? LastInput { get; }
+    List<string> History { get; }
 }
