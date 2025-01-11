@@ -84,9 +84,7 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
                 {
                     clearFinalLogs = false;
                     IOM.ClearLogs();
-                    IOM.LogWarning(
-                        $"Error: {err.ErrorType}\n${err.ErrorMessage}\n\nPlease try again."
-                    );
+                    IOM.LogWarning($"Error: {err.Type}\n${err.Message}\n\nPlease try again.");
                     return "exit";
                 }
             );

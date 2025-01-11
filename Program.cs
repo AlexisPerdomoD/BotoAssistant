@@ -18,17 +18,17 @@ var MainOptions = new Dictionary<string, IServiceOption>
             name: "gemini",
             description: "Gemini IA assistant Service, this module includes calling the API, list old conversations, etc",
             cleanConsoleRequired: true,
-            exec: async _ =>
+            exec: _ =>
             {
                 if (Env.GeminiApiKey == null)
                 {
-                    iom.LogWarning("Gemini API key is not set, please set it in the config file\n");
-                    return Result<string?>.Failure(
-                        new(ErrType.ProgramError, "Gemini API key is not set")
+                    var err = Err.AccessDenied(
+                        "Gemini API key is not set, please set it in the config file"
                     );
+                    var result = Result<string?>.Failure(err);
+                    return Task.FromResult(result);
                 }
-                var res = await gemini.Run();
-                return res;
+                return gemini.Run();
             }
         )
     },

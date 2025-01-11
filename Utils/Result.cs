@@ -13,10 +13,28 @@ public enum ErrType
     UnknownError,
 }
 
-public readonly struct Err(ErrType errorType, string errorMessage)
+public readonly struct Err
 {
-    public string ErrorMessage { get; } = errorMessage;
-    public ErrType ErrorType { get; } = errorType;
+    public string Message { get; }
+    public ErrType Type { get; }
+
+    private Err(ErrType type, string message)
+    {
+        Type = type;
+        Message = message;
+    }
+
+    public static Err InvalidInput(string message) => new(ErrType.InvalidInput, message);
+
+    public static Err AccessDenied(string message) => new(ErrType.AccessDenied, message);
+
+    public static Err Timeout(string message) => new(ErrType.Timeout, message);
+
+    public static Err NetworkError(string message) => new(ErrType.NetworkError, message);
+
+    public static Err ProgramError(string message) => new(ErrType.ProgramError, message);
+
+    public static Err UnknownError(string message) => new(ErrType.UnknownError, message);
 }
 
 public readonly struct Result<T>
