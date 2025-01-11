@@ -28,7 +28,7 @@ public class Chat(string? model = null)
 
     public record Content(string Role, List<Part> Parts);
 
-    private readonly List<Content> _current = new();
+    private readonly List<Content> _current = [];
 
     public void Add(Role role, string text)
     {
