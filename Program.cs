@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 var iom = new MainIOMannager(LogLevel.Information);
 var usrMngr = new UsrMannager(iom);
-var gemini = new GeminiService(iom, usrMngr);
+var gemini = new GeminiService(iom, usrMngr.GetCurrentUsr);
 var MainOptions = new Dictionary<string, IServiceOption>
 {
     {
@@ -18,22 +18,33 @@ var MainOptions = new Dictionary<string, IServiceOption>
             name: "gemini",
             description: "Gemini IA assistant Service, this module includes calling the API, list old conversations, etc",
             cleanConsoleRequired: true,
-            exec: _ =>
+            exec: async _ =>
             {
-                if (Env.GeminiApiKey == null)
+                if (Env.GeminiApiKey is null)
                 {
-                    var err = Err.AccessDenied(
-                        "Gemini API key is not set, please set it in the config file"
-                    );
-                    var result = Result<string?>.Failure(err);
-                    return Task.FromResult(result);
+                    var message = "Gemini API key is not set, please set it in the config file";
+                    return Err.AccessDenied(message);
                 }
-                return gemini.Run();
+                var res = await gemini.Run();
+                return res;
             }
         )
     },
 }.ToImmutableDictionary();
 
+// TODO: REFACTOR USRS CLASSES RELATED
+// in order to save chat history and others stuff
+// in order to handle better interfaces since there are new things that were not before
+// in order to have cleaner code
+// simplify
+// TODO: IMPLEMENT Spectre.Console library
+// implement selectable options
+// implement colorfull messages
+// implement loading visual when necessary
+// https://spectreconsole.net/prompts/text
+// or https://www.nuget.org/packages/Terminal.Gui/ as alternative
+// TODO: Implement Markdown output for IA responses
+// TODO: Implement chat box or something in order to paste multiline text
 MainService mainService = new(iom, "Boto", "Main Service", MainOptions, usrMngr);
 await mainService.Run();
 mainService.GoodBye();
