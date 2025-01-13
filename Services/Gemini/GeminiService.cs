@@ -7,7 +7,7 @@ using Boto.Utils;
 
 namespace Boto.Services.Gemini;
 
-public class GeminiService(IIOMannagerService iom, IUsrMannager usrMngr)
+public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
     : BaseService(
         iom,
         name: "Gemini",
@@ -15,47 +15,38 @@ public class GeminiService(IIOMannagerService iom, IUsrMannager usrMngr)
     )
 {
     private static readonly HttpClient _apiClient = new();
-    private readonly IUsrMannager _usrMngr = usrMngr;
+    public virtual string BaseUrl { get; } = "https://generativelanguage.googleapis.com/v1beta";
+    private IUsr _usr => GetUsr() ?? throw new InvalidCastException("Not User provided");
 
     private Chat? _chat { get; set; }
 
-    // TODO: Call the API METHOD
-    public async Task<bool> GenerateText(string text, bool stream = true)
+    public async Task<Result<bool>> Chatting(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return false;
         _chat ??= new Chat();
         _chat.Add(Chat.Role.User, text);
-
-        var baseUrl = "https://generativelanguage.googleapis.com/v1beta";
-        var chatType = stream ? "streamGenerateContent?alt=sse&key=" : "generateContent?key=";
+        var baseUrl = BaseUrl;
+        var chatType = "streamGenerateContent?alt=sse&key=";
         var url = $"{baseUrl}/models/{_chat.Model}:{chatType}{Env.GeminiApiKey}";
         var content = new StringContent(_chat.ToJson(), Encoding.UTF8, "application/json");
-        var response = await _apiClient.PostAsync(url, content);
+        var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+        var requestType = HttpCompletionOption.ResponseHeadersRead; // start reading as soon as the headers are set
+        var response = await _apiClient.SendAsync(request, requestType);
         if (!response.IsSuccessStatusCode)
         {
-            IOM.LogWarning(
-                $"Error calling the API: {response.StatusCode} --> {response.ReasonPhrase}\n"
-            );
-            IOM.LogInformation("sorry about that, try again later\n");
-            return false;
+            var message =
+                $"Error calling the API: {response.StatusCode} --> {response.ReasonPhrase}\n";
+            return Err.ExternalError(message);
         }
 
-        if (!stream)
-        {
-            return true;
-        }
+        var result = await ChatRes.Read(await response.Content.ReadAsStreamAsync(), true);
 
-        using var streamReader = new StreamReader(response.Content.ReadAsStream());
-        while (!streamReader.EndOfStream)
-        {
-            var line = await streamReader.ReadLineAsync();
-            if (line == null)
-                continue;
-            //_chat.Add(Chat.Role.Assistant, line);
-            IOM.LogInformation(line + "\n\n");
-        }
+        if (!result.IsOk)
+            return result.Err;
 
+        var (_, resMesage) = result.Value;
+        _chat.Add(Chat.Role.Model, resMesage);
         return true;
     }
 
@@ -70,29 +61,36 @@ public class GeminiService(IIOMannagerService iom, IUsrMannager usrMngr)
                     cleanConsoleRequired: true,
                     exec: async (_args) =>
                     {
-                        var usr = _usrMngr.GetCurrentUsr();
-                        if (usr == null)
-                        {
-                            this.IOM.LogInformation("No user is currently set. Finishing chat.\n");
-                            return null;
-                        }
                         string? i = IOM.GetInput(
-                            $"Hello {usr.Name}! what do you want to chat about?\n"
+                            $"Hello {_usr.Name}! what do you want to chat about?\n"
                         );
-                        if (string.IsNullOrWhiteSpace(i))
+                        while (true)
                         {
-                            this.IOM.LogInformation("Finishing chat.\n");
-                            return null;
+                            if (string.IsNullOrWhiteSpace(i))
+                            {
+                                this.IOM.LogInformation("Not input provided, finishing chat.\n");
+                                return "child process done";
+                            }
+                            var res = await Chatting(i);
+                            if (!res.IsOk)
+                            {
+                                IOM.LogWarning(res.Err.Message);
+                                IOM.LogInformation("sorry about that, try again later\n");
+
+                                return "child process done";
+                            }
+                            i = IOM.GetInput("\n\nOther question? just press enter if not\n\n");
+                            if (string.IsNullOrWhiteSpace(i))
+                                break;
+                            continue;
                         }
-                        var res = await GenerateText(i);
-                        // TODO: call the API
-                        // TODO: Print the response
-                        // TODO: ask if the user wants to continue ??
-                        return null;
+                        /// TODO: ASK IF NEED TO SAVE CONVERSATION 
+                        /// TODO: SAVE CONVERSATION IF NEEDED
+                        return "exit";
                     }
                 )
             },
-        }.ToImmutableDictionary(); // TODO: pass this Dictionary as an intance outside of the class to avoid creating a ImmutableDictionary intance everytime
+        }.ToImmutableDictionary();
 
     // TODO: LIST OLD CONVERSATIONS METHOD
     // TODO: DELETE OLD CONVERSATIONS METHOD
@@ -104,7 +102,7 @@ public class GeminiService(IIOMannagerService iom, IUsrMannager usrMngr)
         if (!requiredStartAgain)
         {
             IOM.LogInformation(
-                $"Gemini Assistant to help you with your AI needs {_usrMngr.GetCurrentUsr()?.Name ?? ""}!\n"
+                $"Gemini Assistant to help you with your AI needs {_usr.Name ?? ""}!\n"
             );
         }
         string? opt = IOM.GetInput(FmtOptsList(this.Options));
