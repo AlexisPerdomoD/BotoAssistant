@@ -1,8 +1,10 @@
-using System.Text.Json;
+using Boto.interfaces;
 using Boto.Setup;
 using Boto.Utils.Json;
+using static System.IO.Directory;
+using static System.Text.Json.JsonSerializer;
 
-namespace Boto.Models;
+namespace Boto.Usr;
 
 public class Usr : IUsr
 {
@@ -17,13 +19,14 @@ public class Usr : IUsr
     {
         try
         {
-            if (!Directory.Exists($"{_wdir}/usr"))
+            if (!Exists($"{_wdir}/usr"))
             {
-                DirectoryInfo dir = Directory.CreateDirectory($"{_wdir}/usr");
+                var dir = CreateDirectory($"{_wdir}/usr");
                 Console.WriteLine($"Created directory {dir.FullName}\n");
             }
-            string usrFileText = JsonSerializer.Serialize(this, UsrJsonContext.Default.Usr);
-            await File.WriteAllTextAsync(_path, usrFileText);
+            var context = BotoJsonSerializerContext.Default.Usr;
+            var json = Serialize(this, context);
+            await File.WriteAllTextAsync(_path, json);
             return null;
         }
         catch (Exception e)

@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Boto.Utils;
+using Boto.Utils.Json;
 
 namespace Boto.Services.Gemini;
 
@@ -29,14 +29,9 @@ namespace Boto.Services.Gemini;
   "modelVersion": "gemini-1.5-flash"
 }
 */
-[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
-[JsonSerializable(typeof(ChatRes))]
-[JsonSerializable(typeof(ChatRes.ChatResReader))]
-public partial class JsonResponse : JsonSerializerContext { }
-
-public record ChatRes
+public record ChatGRes
 {
-    public record Candidate(Chat.Content Content);
+    public record Candidate(ChatG.Content Content);
 
     public record Metadata(
         double? PromptTokenCount,
@@ -44,14 +39,14 @@ public record ChatRes
         double? TotalTokenCount
     );
 
-    public struct ChatResReader
+    public struct ChatGResReader
     {
         public Candidate[]? Candidates { get; set; }
         public Metadata? UsageMetadata { get; set; }
         public string? ModelVersion { get; set; }
 
         public override readonly string ToString() =>
-            JsonSerializer.Serialize(this, JsonResponse.Default.ChatResReader);
+            JsonSerializer.Serialize(this, BotoJsonSerializerContext.Default.ChatGResReader);
     }
 
     public Candidate[] Candidates { get; set; }
@@ -59,25 +54,25 @@ public record ChatRes
     public string? ModelVersion { get; set; }
 
     public override string ToString() =>
-        JsonSerializer.Serialize(this, JsonResponse.Default.ChatRes);
+        JsonSerializer.Serialize(this, BotoJsonSerializerContext.Default.ChatGRes);
 
-    public ChatRes(Candidate data, Metadata? metadata, string? specificModel)
+    public ChatGRes(Candidate data, Metadata? metadata, string? specificModel)
     {
         Candidates = [data];
         UsageMetadata = metadata;
         ModelVersion = specificModel;
     }
 
-    private static ChatResReader _processPartialJson(string pjson)
+    private static ChatGResReader _processPartialJson(string pjson)
     {
         if (pjson.StartsWith("data: ", StringComparison.InvariantCulture))
             pjson = pjson["data: ".Length..];
-        var jsonType = JsonResponse.Default.ChatResReader;
+        var jsonType = BotoJsonSerializerContext.Default.ChatGResReader;
         var partialChat = JsonSerializer.Deserialize(pjson, jsonType);
         return partialChat;
     }
 
-    public static async Task<Result<(ChatRes res, string message)>> Read(
+    public static async Task<Result<(ChatGRes res, string message)>> Read(
         Stream stream,
         bool verbose
     )
@@ -128,7 +123,7 @@ public record ChatRes
             var message = messageBuilder.ToString();
             var candidate = new Candidate(new("model", new([new(message)])));
             var metadata = new Metadata(promptTokenCount, candidatesTokenCount, totalTokenCount);
-            var res = new ChatRes(candidate, metadata, resSpecificModel);
+            var res = new ChatGRes(candidate, metadata, resSpecificModel);
 
             return (res, message);
         }
@@ -141,7 +136,7 @@ public record ChatRes
                 _ => Err.ProgramError(e.Message),
             };
 
-            return Result<(ChatRes, string)>.Failure(err);
+            return Result<(ChatGRes, string)>.Failure(err);
         }
     }
 }

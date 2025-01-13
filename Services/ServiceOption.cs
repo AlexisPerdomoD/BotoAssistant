@@ -1,7 +1,7 @@
-using Boto.Models;
+using Boto.interfaces;
 using Boto.Utils;
 
-namespace Boto.Services.ServiceOption;
+namespace Boto.Services;
 
 public class ServiceOpt(
     string name,

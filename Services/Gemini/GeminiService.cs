@@ -1,7 +1,6 @@
 using System.Collections.Immutable;
 using System.Text;
-using Boto.Models;
-using Boto.Services.ServiceOption;
+using Boto.interfaces;
 using Boto.Setup;
 using Boto.Utils;
 
@@ -18,14 +17,14 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
     public virtual string BaseUrl { get; } = "https://generativelanguage.googleapis.com/v1beta";
     private IUsr _usr => GetUsr() ?? throw new InvalidCastException("Not User provided");
 
-    private Chat? _chat { get; set; }
+    private ChatG? _chat { get; set; }
 
     public async Task<Result<bool>> Chatting(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return false;
-        _chat ??= new Chat();
-        _chat.Add(Chat.Role.User, text);
+        _chat ??= new ChatG();
+        _chat.Add(ChatG.Role.User, text);
         var baseUrl = BaseUrl;
         var chatType = "streamGenerateContent?alt=sse&key=";
         var url = $"{baseUrl}/models/{_chat.Model}:{chatType}{Env.GeminiApiKey}";
@@ -40,13 +39,13 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
             return Err.ExternalError(message);
         }
 
-        var result = await ChatRes.Read(await response.Content.ReadAsStreamAsync(), true);
+        var result = await ChatGRes.Read(await response.Content.ReadAsStreamAsync(), true);
 
         if (!result.IsOk)
             return result.Err;
 
         var (_, resMesage) = result.Value;
-        _chat.Add(Chat.Role.Model, resMesage);
+        _chat.Add(ChatG.Role.Model, resMesage);
         return true;
     }
 
@@ -84,7 +83,7 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
                                 break;
                             continue;
                         }
-                        /// TODO: ASK IF NEED TO SAVE CONVERSATION 
+                        /// TODO: ASK IF NEED TO SAVE CONVERSATION
                         /// TODO: SAVE CONVERSATION IF NEEDED
                         return "exit";
                     }

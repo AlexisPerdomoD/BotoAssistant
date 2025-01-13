@@ -1,5 +1,4 @@
 using System.Text.Json.Serialization;
-using Boto.Models;
 
 namespace Boto.Utils.Json;
 
@@ -8,5 +7,9 @@ namespace Boto.Utils.Json;
     WriteIndented = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase
 )]
-[JsonSerializable(typeof(Usr))]
-public partial class UsrJsonContext : JsonSerializerContext { }
+[JsonSerializable(typeof(List<Services.Gemini.ChatG.Content>))]
+[JsonSerializable(typeof(Services.Gemini.ChatG))]
+[JsonSerializable(typeof(Services.Gemini.ChatGRes))]
+[JsonSerializable(typeof(Services.Gemini.ChatGRes.ChatGResReader))]
+[JsonSerializable(typeof(Usr.Usr))]
+public partial class BotoJsonSerializerContext : JsonSerializerContext { }

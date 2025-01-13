@@ -1,18 +1,9 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using Boto.Utils.Json;
 
 namespace Boto.Services.Gemini;
 
-/// Model for serializing and deserializing the Chat class
-[JsonSourceGenerationOptions(
-    WriteIndented = true,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase
-)]
-[JsonSerializable(typeof(List<Chat.Content>))]
-[JsonSerializable(typeof(Chat))]
-internal partial class ChatJsonContext : JsonSerializerContext { }
-
-public class Chat(string? model = null)
+public class ChatG(string? model = null)
 {
     public static readonly string[] Models = ["gemini-1.5-flash"];
     public string Model { get; init; } =
@@ -49,7 +40,7 @@ public class Chat(string? model = null)
 
     public virtual string ToJson()
     {
-        var contents = JsonSerializer.Serialize(_current, ChatJsonContext.Default.ListContent);
+        var contents = JsonSerializer.Serialize(_current, BotoJsonSerializerContext.Default.ChatG);
         return "{contents: " + contents + "}";
     }
 }

@@ -1,4 +1,4 @@
-using Boto.Models;
+using Boto.interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace Boto.Utils;

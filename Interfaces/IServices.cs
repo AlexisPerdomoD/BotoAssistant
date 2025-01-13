@@ -4,7 +4,7 @@ using Boto.Utils;
 /// TODO: CREATE interface for Result<T> class
 /// TODO: improve interfaces docs
 /// TODO: Simplify the interfaces
-namespace Boto.Models;
+namespace Boto.interfaces;
 
 /// --- Services Models ---
 

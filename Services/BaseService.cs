@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using Boto.Models;
+using Boto.interfaces;
 using Boto.Utils;
 
 namespace Boto.Services;

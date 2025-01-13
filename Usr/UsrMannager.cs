@@ -1,8 +1,9 @@
 using System.Text.Json;
+using Boto.interfaces;
 using Boto.Setup;
 using Boto.Utils.Json;
 
-namespace Boto.Models;
+namespace Boto.Usr;
 
 public class UsrMannager(IBotoLogger logger) : IUsrMannager
 {
@@ -19,8 +20,9 @@ public class UsrMannager(IBotoLogger logger) : IUsrMannager
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             if (!File.Exists(usrPath))
                 return (null, null);
-            string usrFileText = await File.ReadAllTextAsync(usrPath);
-            IUsr? usr = JsonSerializer.Deserialize(usrFileText, UsrJsonContext.Default.Usr);
+            var usrFileText = await File.ReadAllTextAsync(usrPath);
+            var context = BotoJsonSerializerContext.Default.Usr;
+            IUsr? usr = JsonSerializer.Deserialize(usrFileText, context);
             return (null, usr);
         }
         catch (Exception e)
@@ -49,7 +51,8 @@ public class UsrMannager(IBotoLogger logger) : IUsrMannager
 
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             IUsr usr = new Usr(usrName, usrProfile, profileTags);
-            string usrFileText = JsonSerializer.Serialize(usr, UsrJsonContext.Default.Usr);
+            var context = BotoJsonSerializerContext.Default.Usr;
+            var usrFileText = JsonSerializer.Serialize(usr, context);
             await File.WriteAllTextAsync(usrPath, usrFileText);
             this._currentUsr = usr;
             return (null, usr);

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Immutable;
-using Boto.Models;
+using Boto.interfaces;
 using Boto.Services;
 using Boto.Services.Gemini;
-using Boto.Services.ServiceOption;
 using Boto.Setup;
+using Boto.Usr;
 using Boto.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -33,6 +33,7 @@ var MainOptions = new Dictionary<string, IServiceOption>
 }.ToImmutableDictionary();
 
 // TODO: REFACTOR USRS CLASSES RELATED
+// implement Result return type for better handling
 // in order to save chat history and others stuff
 // in order to handle better interfaces since there are new things that were not before
 // in order to have cleaner code
