@@ -9,6 +9,7 @@ public enum ErrType
     AccessDenied,
     Timeout,
     NetworkError,
+    ExternalError,
     ProgramError,
     UnknownError,
 }
@@ -31,6 +32,8 @@ public readonly struct Err
     public static Err Timeout(string message) => new(ErrType.Timeout, message);
 
     public static Err NetworkError(string message) => new(ErrType.NetworkError, message);
+
+    public static Err ExternalError(string message) => new(ErrType.ExternalError, message);
 
     public static Err ProgramError(string message) => new(ErrType.ProgramError, message);
 
