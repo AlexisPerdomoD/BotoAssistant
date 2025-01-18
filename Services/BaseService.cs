@@ -26,6 +26,7 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
     public abstract ImmutableDictionary<string, IServiceOption> Options { get; }
     public abstract Task<Result<string?>> Start(bool requiredStartAgain = false);
     public static string WorkDir => Env.WorkingDirectory;
+
     protected static string FmtOptsList(ImmutableDictionary<string, IServiceOption> options)
     {
         string formatted = $"Options List:\n";
@@ -39,64 +40,73 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
 
     public async Task<Result<string?>> Run()
     {
-        IOM.ClearLogs();
-        var clearFinalLogs = true;
-        var startProcess = await this.Start();
-        if (!startProcess.IsOk)
-            return startProcess;
-        var input = startProcess.Value;
-        if (string.IsNullOrWhiteSpace(input))
+        try
         {
-            IOM.LogInformation($"No input provided. Exiting Service {Name}.\n");
-            return null;
-        }
-        while (true)
-        {
-            if (input == "service child done")
-            {
-                input = IOM.GetInput(FmtOptsList(Options));
-                continue;
-            }
+            IOM.ClearLogs();
+            var clearFinalLogs = true;
+            var startProcess = await this.Start();
+            if (!startProcess.IsOk)
+                return startProcess;
+            var input = startProcess.Value;
             if (string.IsNullOrWhiteSpace(input))
             {
                 IOM.LogInformation($"No input provided. Exiting Service {Name}.\n");
-                break;
+                return null;
+            }
+            while (true)
+            {
+                if (input == "service child done")
+                {
+                    input = IOM.GetInput(FmtOptsList(Options));
+                    continue;
+                }
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    IOM.LogInformation($"No input provided. Exiting Service {Name}.\n");
+                    break;
+                }
+                if (input == "exit")
+                {
+                    IOM.LogInformation($"Exiting Service {Name}.\n");
+                    break;
+                }
+
+                if (!Options.TryGetValue(input, out IServiceOption? option))
+                {
+                    IOM.ClearLogs();
+                    input = IOM.GetInput(
+                        $"Option {input} not found.\nPlease enter a valid option name.\n\n{FmtOptsList(Options)}"
+                    );
+                    continue;
+                }
+                if (option.CleanConsoleRequired)
+                    IOM.ClearLogs();
+                var res = await option.Exec();
+                input = res.Match(
+                    i => i,
+                    err =>
+                    {
+                        clearFinalLogs = false;
+                        IOM.ClearLogs();
+                        IOM.LogWarning($"Error: {err.Type}\n${err.Message}\n\nPlease try again.");
+                        return "exit";
+                    }
+                );
             }
             if (input == "exit")
             {
-                IOM.LogInformation($"Exiting Service {Name}.\n");
-                break;
-            }
-
-            if (!Options.TryGetValue(input, out IServiceOption? option))
-            {
-                IOM.ClearLogs();
-                input = IOM.GetInput(
-                    $"Option {input} not found.\nPlease enter a valid option name.\n\n{FmtOptsList(Options)}"
-                );
-                continue;
-            }
-            if (option.CleanConsoleRequired)
-                IOM.ClearLogs();
-            var res = await option.Exec();
-            input = res.Match(
-                i => i,
-                err =>
-                {
-                    clearFinalLogs = false;
+                if (clearFinalLogs)
                     IOM.ClearLogs();
-                    IOM.LogWarning($"Error: {err.Type}\n${err.Message}\n\nPlease try again.");
-                    return "exit";
-                }
-            );
+                IOM.LogInformation($"Service {Name} exited.\n");
+                input = "service child done";
+            }
+            return input;
         }
-        if (input == "exit")
+        catch (Exception e)
         {
-            if (clearFinalLogs)
-                IOM.ClearLogs();
-            IOM.LogInformation($"Service {Name} exited.\n");
-            input = "service child done";
+            var message = "FATAL: An Unexpected error happend on Run() service level\n";
+            IOM.LogError(message, e);
+            return Err.UnknownError("FATAL Run() Service level Error Encounter!!!!");
         }
-        return input;
     }
 }
