@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Boto.interfaces;
 using Boto.Setup;
+using Boto.Utils;
 using Boto.Utils.Json;
 
 namespace Boto.Usr;
@@ -12,100 +13,99 @@ public class UsrMannager(IBotoLogger logger) : IUsrMannager
     private readonly IBotoLogger _errorLogger = logger;
     private IUsr? _currentUsr;
 
-    public async Task<(Exception? e, IUsr? usr)> UsrExists(string usrName)
+    public Result<IUsr?> UsrExists(string usrName)
     {
         try
         {
             usrName = usrName.ToLowerInvariant().Trim();
+            if (string.IsNullOrWhiteSpace(usrName))
+            {
+                return Err.InvalidInput("usrName not valid");
+            }
+
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
             if (!File.Exists(usrPath))
-                return (null, null);
-            var usrFileText = await File.ReadAllTextAsync(usrPath);
+                return null;
+
+            var usrFileText = File.ReadAllText(usrPath);
             var context = BotoJsonSerializerContext.Default.Usr;
-            IUsr? usr = JsonSerializer.Deserialize(usrFileText, context);
-            return (null, usr);
+            Usr? usr = JsonSerializer.Deserialize(usrFileText, context);
+            return usr;
         }
         catch (Exception e)
         {
-            _errorLogger.LogInformation(
-                "Error happen while verifying user.\nProgram will be finished.",
-                true
-            );
-
             if (AppMode == "DEV")
                 _errorLogger.LogError(e.Message, e);
-            return (e, null);
+
+            var err = e switch
+            {
+                JsonException => Err.InvalidInput(e.Message),
+                FileLoadException => Err.ProgramError(e.Message),
+                _ => Err.UnknownError(e.Message),
+            };
+            return err;
         }
     }
 
-    public async Task<(Exception? e, IUsr? usr)> CreateUsr(
-        string usrName,
-        string usrProfile,
-        string[] profileTags
-    )
+    public Result<IUsr> CreateUsr(string usrName, string usrProfile, string[] profileTags)
     {
         try
         {
             if (!Directory.Exists($"{Wdir}/usr"))
+            {
                 _ = Directory.CreateDirectory($"{Wdir}/usr");
+            }
 
             string usrPath = Path.Combine(Wdir, $"usr/{usrName}.json");
-            IUsr usr = new Usr(usrName, usrProfile, profileTags);
+            Usr usr = new Usr(usrName, usrProfile, profileTags);
             var context = BotoJsonSerializerContext.Default.Usr;
             var usrFileText = JsonSerializer.Serialize(usr, context);
-            await File.WriteAllTextAsync(usrPath, usrFileText);
+            File.WriteAllText(usrPath, usrFileText);
             this._currentUsr = usr;
-            return (null, usr);
+            return usr;
         }
         catch (Exception e)
         {
-            return (e, null);
+            var err = e switch
+            {
+                JsonException => Err.InvalidInput(e.Message),
+                FileLoadException => Err.ProgramError(e.Message),
+                _ => Err.UnknownError(e.Message),
+            };
+            return err;
         }
     }
 
-    public async Task<bool> SetCurrentUsr(IUsr? usr)
+    public Result<bool> SetCurrentUsr(ref IUsr usr)
     {
-        if (usr is null)
-        {
-            this._currentUsr = null;
-            return true;
-        }
-        var (e, user) = await this.UsrExists(usr.Name);
-        if (e != null)
-        {
-            _errorLogger.LogError($"Error while checking if user {usr.Name} exists.", e);
-            return false;
-        }
-        if (user == null)
-        {
-            _errorLogger.LogInformation($"User {usr.Name} does not exist.");
-            return false;
-        }
+        var res = UsrExists(usr.Name);
+        if (!res.IsOk)
+            return res.Err;
+        if (res.Value is null)
+            return Err.InvalidInput("Usr does not exist on db");
+
         usr.LastLogin = DateTime.Now;
-        _ = await usr.SaveUsrSts(); // TODO: Check if return string Error
-        this._currentUsr = usr;
+        _currentUsr = usr;
+        _ = usr.SaveUsrSts(); // TODO: Check if return string Error
         return true;
     }
 
-    public async Task<bool> SetCurrentUsr(string usrName)
+    public Result<bool> SetCurrentUsr(ref string usrname)
     {
-        var (e, usr) = await this.UsrExists(usrName);
-        if (e != null)
-        {
-            _errorLogger.LogError($"Error while checking if user {usrName} exists.", e);
-            return false;
-        }
+        var res = UsrExists(usrname);
+        if (!res.IsOk)
+            return res.Err;
+        var usr = res.Value;
         if (usr == null)
-        {
-            _errorLogger.LogInformation($"User {usrName} does not exist.");
-            return false;
-        }
+            return Err.InvalidInput("Usr does not exist on db");
 
         usr.LastLogin = DateTime.Now;
-        _ = await usr.SaveUsrSts(); // TODO: Check if return string Error
-        this._currentUsr = usr;
+        _ = usr.SaveUsrSts(); // TODO: Check if return string Error
+        _currentUsr = usr;
         return true;
     }
 
-    public IUsr? GetCurrentUsr() => this._currentUsr;
+    public IUsr? GetCurrentUsr() => _currentUsr;
+
+    public void RemoveCurrentUsr() => _currentUsr = null;
 }

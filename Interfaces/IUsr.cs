@@ -1,3 +1,5 @@
+using Boto.Utils;
+
 namespace Boto.interfaces;
 
 /// <summary>
@@ -29,12 +31,10 @@ public interface IUsr
 /// </remarks>
 public interface IUsrMannager
 {
-    Task<(Exception? e, IUsr? usr)> UsrExists(string usrName);
-    Task<(Exception? e, IUsr? usr)> CreateUsr(
-        string usrName,
-        string usrProfile,
-        string[] profileTags
-    );
     IUsr? GetCurrentUsr();
-    Task<bool> SetCurrentUsr(IUsr? usr);
+    void RemoveCurrentUsr();
+    Result<IUsr?> UsrExists(string usrName);
+    Result<IUsr> CreateUsr(string usrName, string usrProfile, string[] profileTags);
+    Result<bool> SetCurrentUsr(ref IUsr usr);
+    Result<bool> SetCurrentUsr(ref string usrname);
 }

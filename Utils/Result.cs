@@ -1,6 +1,10 @@
+using System.Net.NetworkInformation;
+using System.Text.Json;
+
 namespace Boto.Utils;
 
 #pragma warning disable CA1000
+public readonly struct None { }
 
 public enum ErrType
 {
@@ -61,7 +65,7 @@ public readonly struct Result<T>
         Err = err;
     }
 
-    public static Result<T> Ok(T value) => new(value);
+    public static Result<TArg> Ok<TArg>(TArg value) => new(value);
 
     public static Result<T> Failure(Err err) => new(err);
 
@@ -71,4 +75,44 @@ public readonly struct Result<T>
 
     public TResult Match<TResult>(Func<T?, TResult> success, Func<Err, TResult> failure) =>
         _isSuccess ? success(Value) : failure(Err);
+
+    public static async Task<Result<T>> FromTask(Task<T> task)
+    {
+        try
+        {
+            var value = await task;
+            return Ok(value);
+        }
+        catch (Exception e)
+        {
+            return e switch
+            {
+                JsonException => Err.InvalidInput(e.Message),
+                HttpRequestException => Err.NetworkError(e.Message),
+                NetworkInformationException => Err.NetworkError(e.Message),
+                FileLoadException => Err.ProgramError(e.Message),
+                _ => Err.UnknownError(e.Message),
+            };
+        }
+    }
+
+    public static async Task<Result<None>> FromTask(Task task)
+    {
+        try
+        {
+            await task;
+            return Ok(new None());
+        }
+        catch (Exception e)
+        {
+            return e switch
+            {
+                JsonException => Err.InvalidInput(e.Message),
+                HttpRequestException => Err.NetworkError(e.Message),
+                NetworkInformationException => Err.NetworkError(e.Message),
+                FileLoadException => Err.ProgramError(e.Message),
+                _ => Err.UnknownError(e.Message),
+            };
+        }
+    }
 }
