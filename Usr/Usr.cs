@@ -1,5 +1,6 @@
 using Boto.interfaces;
 using Boto.Setup;
+using Boto.Utils;
 using Boto.Utils.Json;
 using static System.IO.Directory;
 using static System.Text.Json.JsonSerializer;
@@ -15,24 +16,18 @@ public class Usr : IUsr
     public string[] ProfileTags { get; set; }
     public DateTime LastLogin { get; set; }
 
-    public async Task<string?> SaveUsrSts()
+    public async Task<Result<bool>> SaveUsrSts()
     {
-        try
+        if (!Exists($"{_wdir}/usr"))
         {
-            if (!Exists($"{_wdir}/usr"))
-            {
-                var dir = CreateDirectory($"{_wdir}/usr");
-                Console.WriteLine($"Created directory {dir.FullName}\n");
-            }
-            var context = BotoJsonSerializerContext.Default.Usr;
-            var json = Serialize(this, context);
-            await File.WriteAllTextAsync(_path, json);
-            return null;
+            var dir = CreateDirectory($"{_wdir}/usr");
+            Console.WriteLine($"Created directory {dir.FullName}\n");
         }
-        catch (Exception e)
-        {
-            return $"{e.GetType().Name}\n{e.Message}\n{e.StackTrace}";
-        }
+        var context = BotoJsonSerializerContext.Default.Usr;
+        var json = Serialize(this, context);
+        var fileTask = File.WriteAllTextAsync(_path, json);
+        var result = await Result<bool>.FromTask(fileTask);
+        return result.IsOk ? true : result.Err;
     }
 
     public Usr(string name, string usrProfile, string[] profileTags)

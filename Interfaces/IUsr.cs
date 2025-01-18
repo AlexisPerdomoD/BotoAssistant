@@ -20,7 +20,7 @@ public interface IUsr
     /// </summary>
     /// <param name="usr"></param>
     /// <returns>error message if any, else null</returns>
-    Task<string?> SaveUsrSts();
+    Task<Result<bool>> SaveUsrSts();
 }
 
 /// <summary>
