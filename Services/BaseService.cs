@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Boto.interfaces;
+using Boto.Setup;
 using Boto.Utils;
 
 namespace Boto.Services;
@@ -24,7 +25,7 @@ public abstract class BaseService(IIOMannagerService iom, string name, string de
     public string Description => description;
     public abstract ImmutableDictionary<string, IServiceOption> Options { get; }
     public abstract Task<Result<string?>> Start(bool requiredStartAgain = false);
-
+    public static string WorkDir => Env.WorkingDirectory;
     protected static string FmtOptsList(ImmutableDictionary<string, IServiceOption> options)
     {
         string formatted = $"Options List:\n";

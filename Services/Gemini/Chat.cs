@@ -40,7 +40,7 @@ public class ChatG(string? model = null)
 
     public virtual string ToJson()
     {
-        var contents = JsonSerializer.Serialize(_current, BotoJsonSerializerContext.Default.ChatG);
+        var contents = JsonSerializer.Serialize(_current, BotoJsonSerializerContext.Default.ListContent);
         return "{contents: " + contents + "}";
     }
 }

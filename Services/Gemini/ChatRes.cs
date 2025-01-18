@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using Boto.Utils;
 using Boto.Utils.Json;
 
 namespace Boto.Services.Gemini;
@@ -72,71 +71,54 @@ public record ChatGRes
         return partialChat;
     }
 
-    public static async Task<Result<(ChatGRes res, string message)>> Read(
-        Stream stream,
-        bool verbose
-    )
+    public static async Task<(ChatGRes res, string message)> Read(Stream stream, bool verbose)
     {
-        try
+        var reader = new StreamReader(stream);
+        var messageBuilder = new StringBuilder();
+
+        string? resSpecificModel = null;
+        double? promptTokenCount = null;
+        double? candidatesTokenCount = null;
+        double? totalTokenCount = null;
+
+        while (!reader.EndOfStream)
         {
-            var reader = new StreamReader(stream);
-            var messageBuilder = new StringBuilder();
+            var partialJson = await reader.ReadLineAsync();
+            if (string.IsNullOrWhiteSpace(partialJson))
+                continue;
+            var partialChat = _processPartialJson(partialJson);
+            var meta = partialChat.UsageMetadata;
+            var candidates = partialChat.Candidates;
+            var model = partialChat.ModelVersion;
 
-            string? resSpecificModel = null;
-            double? promptTokenCount = null;
-            double? candidatesTokenCount = null;
-            double? totalTokenCount = null;
-
-            while (!reader.EndOfStream)
+            if (meta is not null)
             {
-                var partialJson = await reader.ReadLineAsync();
-                if (string.IsNullOrWhiteSpace(partialJson))
-                    continue;
-                var partialChat = _processPartialJson(partialJson);
-                var meta = partialChat.UsageMetadata;
-                var candidates = partialChat.Candidates;
-                var model = partialChat.ModelVersion;
-
-                if (meta is not null)
-                {
-                    promptTokenCount ??= meta.PromptTokenCount;
-                    candidatesTokenCount ??= meta.CandidatesTokenCount;
-                    totalTokenCount ??= meta.TotalTokenCount;
-                }
-
-                if (candidates is not null && candidates.Length > 0)
-                {
-                    foreach (var c in candidates)
-                    {
-                        if (c?.Content?.Parts is null || c.Content.Parts.Count == 0)
-                            continue;
-                        var tempMessage = string.Join(" ", c.Content.Parts[0].text);
-
-                        if (verbose)
-                            Console.Write(tempMessage);
-                        _ = messageBuilder.Append(tempMessage);
-                    }
-                }
-                if (model is not null)
-                    resSpecificModel = model;
+                promptTokenCount ??= meta.PromptTokenCount;
+                candidatesTokenCount ??= meta.CandidatesTokenCount;
+                totalTokenCount ??= meta.TotalTokenCount;
             }
-            var message = messageBuilder.ToString();
-            var candidate = new Candidate(new("model", new([new(message)])));
-            var metadata = new Metadata(promptTokenCount, candidatesTokenCount, totalTokenCount);
-            var res = new ChatGRes(candidate, metadata, resSpecificModel);
 
-            return (res, message);
-        }
-        catch (Exception e)
-        {
-            var err = e switch
+            if (candidates is not null && candidates.Length > 0)
             {
-                HttpRequestException => Err.NetworkError(e.Message),
-                JsonException => Err.InvalidInput(e.Message),
-                _ => Err.ProgramError(e.Message),
-            };
+                foreach (var c in candidates)
+                {
+                    if (c?.Content?.Parts is null || c.Content.Parts.Count == 0)
+                        continue;
+                    var tempMessage = string.Join(" ", c.Content.Parts[0].text);
 
-            return Result<(ChatGRes, string)>.Failure(err);
+                    if (verbose)
+                        Console.Write(tempMessage);
+                    _ = messageBuilder.Append(tempMessage);
+                }
+            }
+            if (model is not null)
+                resSpecificModel = model;
         }
+        var message = messageBuilder.ToString();
+        var candidate = new Candidate(new("model", new([new(message)])));
+        var metadata = new Metadata(promptTokenCount, candidatesTokenCount, totalTokenCount);
+        var res = new ChatGRes(candidate, metadata, resSpecificModel);
+
+        return (res, message);
     }
 }

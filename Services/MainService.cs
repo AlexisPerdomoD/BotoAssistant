@@ -15,7 +15,7 @@ public class MainService(
     public IUsrMannager Mngr { get; } = usrMngr;
     public override ImmutableDictionary<string, IServiceOption> Options { get; } = options;
 
-    public override async Task<Result<string?>> Start(bool requiredStartAgain = false)
+    public override Task<Result<string?>> Start(bool requiredStartAgain = false)
     {
         if (!requiredStartAgain)
         {
@@ -26,12 +26,16 @@ public class MainService(
             if (string.IsNullOrWhiteSpace(name) || name == "exit")
             {
                 GoodBye();
-                return null;
+                return Task.FromResult<Result<string?>>(null);
             }
-            var (e, usr) = await Mngr.UsrExists(name);
-            if (e is not null)
-                GoodBye($"\nError while checking if user {name} exists.\nEnding program.");
+            var existRes = Mngr.UsrExists(name);
 
+            if (!existRes.IsOk)
+            {
+                var err = existRes.Err;
+                GoodBye($"\nError while checking if user {name} exists.\nEnding program.", err);
+            }
+            var usr = existRes.Value;
             IOM.ClearLogs();
             if (usr is null)
             {
@@ -44,20 +48,28 @@ public class MainService(
                     IOM.GetInput(
                         $"Please enter a list of tags for {name} profile separated by space.\nThe idea is use this when consulting AI APIS.\n"
                     ) ?? "";
-                (e, _) = await Mngr.CreateUsr(name, usrProfile, profileTags.Split(" "));
-                if (e is not null)
-                    GoodBye($"\nError while creating user {name}.\nEnding program.");
+
+                var createRes = Mngr.CreateUsr(name, usrProfile, profileTags.Split(" "));
+                if (!createRes.IsOk)
+                {
+                    var err = createRes.Err;
+                    GoodBye($"\nError while creating user {name}.\nEnding program.", err);
+                }
                 IOM.LogInformation($"User {name} created.\n");
             }
             else
             {
                 IOM.LogInformation($"User {name} exists.\nWelcome back!\n");
-                var usrSettled = await Mngr.SetCurrentUsr(usr);
-                if (!usrSettled)
-                    GoodBye($"\nError while setting user {name} as current user.\nEnding program.");
+                var usrSettledRes = Mngr.SetCurrentUsr(ref usr);
+                if (!usrSettledRes.IsOk)
+                {
+                    var err = usrSettledRes.Err;
+                    GoodBye($"\nError while setting user {name}.\nEnding program.", err);
+                }
             }
         }
-        return IOM.GetInput(FmtOptsList(Options));
+        var response = IOM.GetInput(FmtOptsList(Options));
+        return Task.FromResult<Result<string?>>(response);
     }
 
     public void GoodBye()
@@ -68,6 +80,16 @@ public class MainService(
 
     public void GoodBye(string message)
     {
+        IOM.LogInformation(message);
+        Environment.Exit(0);
+    }
+
+    public void GoodBye(string message, Err err)
+    {
+        var errType = err.Type;
+        var errMessage = err.Message;
+        IOM.LogWarning($"{errType}: {errMessage}");
+
         IOM.LogInformation(message);
         Environment.Exit(0);
     }

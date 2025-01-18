@@ -3,6 +3,7 @@ using System.Text;
 using Boto.interfaces;
 using Boto.Setup;
 using Boto.Utils;
+using Boto.Utils.Json;
 
 namespace Boto.Services.Gemini;
 
@@ -19,7 +20,7 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
 
     private ChatG? _chat { get; set; }
 
-    public async Task<Result<bool>> Chatting(string text)
+    private async Task<Result<bool>> _chatting(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
             return false;
@@ -32,6 +33,7 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
         var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
         var requestType = HttpCompletionOption.ResponseHeadersRead; // start reading as soon as the headers are set
         var response = await _apiClient.SendAsync(request, requestType);
+
         if (!response.IsSuccessStatusCode)
         {
             var message =
@@ -39,7 +41,8 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
             return Err.ExternalError(message);
         }
 
-        var result = await ChatGRes.Read(await response.Content.ReadAsStreamAsync(), true);
+        var readingTask = ChatGRes.Read(await response.Content.ReadAsStreamAsync(), true);
+        var result = await Result<(ChatGRes, string)>.FromTask(readingTask);
 
         if (!result.IsOk)
             return result.Err;
@@ -47,6 +50,23 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
         var (_, resMesage) = result.Value;
         _chat.Add(ChatG.Role.Model, resMesage);
         return true;
+    }
+
+    private async Task<Result<bool>> _saveChat()
+    {
+        if (_chat is null)
+            return Err.InvalidInput("No Current chat is active");
+        var baseDir = $"{WorkDir}/chats";
+        if (!Directory.Exists(baseDir))
+        {
+            _ = Directory.CreateDirectory(baseDir);
+        }
+
+        var content = _chat.ToJson();
+        var filepath = $"{baseDir}/{_usr.Name}-{DateTime.Now}";
+        var writtingTask = File.WriteAllTextAsync(filepath, content);
+        var result = await Result<None>.FromTask(writtingTask);
+        return (!result.IsOk) ? result.Err : true;
     }
 
     public override ImmutableDictionary<string, IServiceOption> Options =>
@@ -70,7 +90,7 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
                                 this.IOM.LogInformation("Not input provided, finishing chat.\n");
                                 return "child process done";
                             }
-                            var res = await Chatting(i);
+                            var res = await _chatting(i);
                             if (!res.IsOk)
                             {
                                 IOM.LogWarning(res.Err.Message);
@@ -83,8 +103,15 @@ public class GeminiService(IIOMannagerService iom, Func<IUsr?> GetUsr)
                                 break;
                             continue;
                         }
-                        /// TODO: ASK IF NEED TO SAVE CONVERSATION
-                        /// TODO: SAVE CONVERSATION IF NEEDED
+                        var message =
+                            "Would you like to save conversation?\n\n- type 'yes' to save\n - Press enter to continue";
+                        var save = IOM.GetInput(message);
+                        if (message == "yes")
+                        {
+                            IOM.LogInformation("Saving last chat...");
+                            _ = _saveChat();
+                        }
+                        _chat = null;
                         return "exit";
                     }
                 )
