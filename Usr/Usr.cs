@@ -30,6 +30,26 @@ public class Usr : IUsr
         return result.IsOk ? true : result.Err;
     }
 
+    public string GetSts() =>
+        $@"Usr {Name} information:
+ 
+-> Profile description:
+
+{UsrProfile}
+
+-> Profile involed tags:
+{string.Join(", ", ProfileTags)}
+ 
+-> Last login:
+
+{LastLogin}
+
+-> Usr profile path:
+
+{_path}
+
+    ";
+
     public Usr(string name, string usrProfile, string[] profileTags)
     {
         if (string.IsNullOrEmpty(name.Trim()))
@@ -39,6 +59,6 @@ public class Usr : IUsr
         UsrProfile = usrProfile;
         ProfileTags = profileTags;
         LastLogin = DateTime.Now;
-        _path = Path.Combine(_wdir, $"/usr/{Name}.json");
+        _path = _wdir + $"/usr/{Name}.json";
     }
 }

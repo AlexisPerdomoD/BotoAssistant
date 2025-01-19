@@ -4,24 +4,48 @@ using Boto.Utils;
 
 namespace Boto.Services;
 
-public class MainService(
-    IIOMannagerService iom,
-    string name,
-    string description,
-    ImmutableDictionary<string, IServiceOption> options,
-    IUsrMannager usrMngr
-) : BaseService(iom, name, description), IMainService, IUserService
+public class MainService : BaseService, IMainService, IUserService
 {
-    public IUsrMannager Mngr { get; } = usrMngr;
-    public override ImmutableDictionary<string, IServiceOption> Options { get; } = options;
+    private const string _wellcomeMessage =
+        $"Welcome to Boto Assistant!\n\nThis program is meant to be used as a terminal interface to mannage IA requests.\nsome files and notes mannagement in order to be used along with other terminal developer tools.\n\nWho are you?\n\ntype \"exit\" to go out.\n\n";
+    private const string _end = "service child done";
+
+    public IUsrMannager Mngr { get; }
+
+    public override ImmutableDictionary<string, IServiceOption> Options { get; }
+
+    private ImmutableDictionary<string, IServiceOption> _addGeneralExtrasOptions(
+        ref Dictionary<string, IServiceOption> options
+    )
+    {
+        options.Add(
+            "show user information",
+            new ServiceOpt(
+                name: "show user information",
+                description: "show basic stash of the current profile",
+                cleanConsoleRequired: true,
+                exec: _ =>
+                {
+                    var usr = Mngr.GetCurrentUsr();
+                    if (usr is null)
+                    {
+                        IOM.LogInformation("There is not setted usr, this is not allowed");
+                        return Task.FromResult<Result<string?>>(_end);
+                    }
+                    IOM.LogInformation(usr.GetSts());
+                    IOM.WaitInteraction(true);
+                    return Task.FromResult<Result<string?>>(_end);
+                }
+            )
+        );
+        return options.ToImmutableDictionary();
+    }
 
     public override Task<Result<string?>> Start(bool requiredStartAgain = false)
     {
         if (!requiredStartAgain)
         {
-            string? name = IOM.GetInput(
-                $"Welcome to Boto Assistant!\n\nThis program is meant to be used as a terminal interface to mannage IA requests.\nsome files and notes mannagement in order to be used along with other terminal developer tools.\n\nWho are you?\n\ntype \"exit\" to go out.\n\n"
-            );
+            var name = IOM.GetInput(_wellcomeMessage);
 
             if (string.IsNullOrWhiteSpace(name) || name == "exit")
             {
@@ -92,5 +116,18 @@ public class MainService(
 
         IOM.LogInformation(message);
         Environment.Exit(0);
+    }
+
+    public MainService(
+        IIOMannagerService iom,
+        string name,
+        string description,
+        Dictionary<string, IServiceOption> options,
+        IUsrMannager usrMngr
+    )
+        : base(iom, name, description)
+    {
+        Mngr = usrMngr;
+        Options = _addGeneralExtrasOptions(ref options);
     }
 }

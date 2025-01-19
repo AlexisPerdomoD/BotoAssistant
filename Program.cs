@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using Boto.interfaces;
+﻿using Boto.interfaces;
 using Boto.Services;
 using Boto.Services.Gemini;
 using Boto.Setup;
@@ -30,7 +29,7 @@ var MainOptions = new Dictionary<string, IServiceOption>
             }
         )
     },
-}.ToImmutableDictionary();
+};
 
 // TODO: REFACTOR USRS CLASSES RELATED
 // implement Result return type for better handling

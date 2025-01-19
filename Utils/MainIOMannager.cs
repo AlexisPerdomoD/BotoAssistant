@@ -46,6 +46,22 @@ public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
         return input;
     }
 
+    public void WaitInteraction(bool clearScreen)
+    {
+        LogInformation("\n\n Press enter key to continue...\n");
+        _ = Console.ReadLine();
+        if (clearScreen)
+            Console.Clear();
+        return;
+    }
+
+    public void WaitInteraction()
+    {
+        LogInformation("\n\n Press enter key to continue...\n");
+        _ = Console.ReadLine();
+        return;
+    }
+
     public void ClearHistory()
     {
         this.History.Clear();

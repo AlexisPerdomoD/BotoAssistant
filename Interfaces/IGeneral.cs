@@ -38,6 +38,8 @@ public interface IInputOutputMannager
         string? customTryAgainMessage = null
     );
     void ClearHistory();
+    void WaitInteraction();
+    void WaitInteraction(bool clearScreen);
     string? LastInput { get; }
     List<string> History { get; }
 }

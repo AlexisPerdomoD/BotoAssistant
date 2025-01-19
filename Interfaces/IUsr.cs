@@ -14,6 +14,7 @@ public interface IUsr
     string UsrProfile { get; set; }
     DateTime LastLogin { get; set; }
     string[] ProfileTags { get; set; }
+    string GetSts();
 
     /// <summary>
     ///   Method to load the user's STS data, usually on "${BOTO_WORKING_DIRECTORY}/usr/usr.json"
