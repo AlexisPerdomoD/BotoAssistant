@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace Boto.interfaces;
 
 public interface IChat
@@ -14,7 +12,7 @@ public interface IChat
 /// <remarks>
 ///   A logger is a class that implements this interface and has a LogLevel
 /// </remarks>
-public interface IBotoLogger : ILogger
+public interface IBotoLogger
 {
     void LogDebug(string message);
     void LogInformation(string message, bool? time = false);
@@ -34,6 +32,12 @@ public interface IInputOutputMannager
 {
     string? GetInput(
         string prompt,
+        Func<string?, bool>? validator = null,
+        string? customTryAgainMessage = null
+    );
+    string? GetInputSelector(
+        string prompt,
+        string[] options,
         Func<string?, bool>? validator = null,
         string? customTryAgainMessage = null
     );

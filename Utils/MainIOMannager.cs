@@ -3,13 +3,13 @@ using Microsoft.Extensions.Logging;
 
 namespace Boto.Utils;
 
-public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
+public abstract class MainIOMannager(LogLevel logLevel) : IIOMannagerService
 {
     private readonly LogLevel _logLevel = logLevel;
-    public string? LastInput { get; private set; }
+    public string? LastInput { get; protected set; }
     public List<string> History { get; private set; } = [];
 
-    public string? GetInput(
+    public virtual string? GetInput(
         string prompt,
         Func<string?, bool>? validator,
         string? customTryAgainMessage
@@ -46,7 +46,7 @@ public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
         return input;
     }
 
-    public void WaitInteraction(bool clearScreen)
+    public virtual void WaitInteraction(bool clearScreen)
     {
         LogInformation("\n\n Press enter key to continue...\n");
         _ = Console.ReadLine();
@@ -55,14 +55,14 @@ public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
         return;
     }
 
-    public void WaitInteraction()
+    public virtual void WaitInteraction()
     {
         LogInformation("\n\n Press enter key to continue...\n");
         _ = Console.ReadLine();
         return;
     }
 
-    public void ClearHistory()
+    public virtual void ClearHistory()
     {
         this.History.Clear();
         this.LastInput = null;
@@ -80,13 +80,13 @@ public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
         return $"{message}";
     }
 
-    public bool IsEnabled(LogLevel logLevel) => logLevel >= this._logLevel;
+    public virtual bool IsEnabled(LogLevel logLevel) => logLevel >= this._logLevel;
 
     // Para simplificar, no implementamos un scope. Si lo necesitas, puedes devolver un objeto IDisposable.
     public IDisposable BeginScope<TState>(TState state)
         where TState : notnull => null!;
 
-    public void Log<TState>(
+    public virtual void Log<TState>(
         LogLevel logLevel,
         EventId eventId,
         TState state,
@@ -102,28 +102,35 @@ public class MainIOMannager(LogLevel logLevel) : IIOMannagerService
         Console.WriteLine(logMessage);
     }
 
-    public void LogInformation(string message, bool? time = false)
+    public virtual void LogInformation(string message, bool? time = false)
     {
         string logMessage =
             time == true ? $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}" : message;
         this.Log(LogLevel.Information, default, logMessage, null, this._defaultFormater);
     }
 
-    public void LogWarning(string message, bool? time = false)
+    public virtual void LogWarning(string message, bool? time = false)
     {
         string logMessage =
             time == true ? $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}" : message;
         this.Log(LogLevel.Warning, default, logMessage, null, this._defaultFormater);
     }
 
-    public void LogError(string message, Exception e) =>
+    public virtual void LogError(string message, Exception e) =>
         this.Log(LogLevel.Error, default, message, e, this._defaultFormater);
 
-    public void LogCritical(string message, Exception e) =>
+    public virtual void LogCritical(string message, Exception e) =>
         this.Log(LogLevel.Critical, default, message, e, this._defaultFormater);
 
-    public void LogDebug(string message) =>
+    public virtual void LogDebug(string message) =>
         this.Log(LogLevel.Debug, default, message, null, this._defaultFormater);
 
-    public void ClearLogs() => Console.Clear();
+    public virtual void ClearLogs() => Console.Clear();
+
+    public abstract string? GetInputSelector(
+        string prompt,
+        string[] options,
+        Func<string?, bool>? validator = null,
+        string? customTryAgainMessage = null
+    );
 }

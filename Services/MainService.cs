@@ -33,7 +33,7 @@ public class MainService : BaseService, IMainService, IUserService
                         return Task.FromResult<Result<string?>>(_end);
                     }
                     IOM.LogInformation(usr.GetSts());
-                    IOM.WaitInteraction(true);
+                    IOM.WaitInteraction(clearScreen: true);
                     return Task.FromResult<Result<string?>>(_end);
                 }
             )
